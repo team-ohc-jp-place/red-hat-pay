@@ -37,7 +37,7 @@ public class PaymentResource {
 
     @POST
     @Path("/pay/{userId}")
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     public Uni<Token> createTokenAPI(@PathParam("userId") final int userId) {
         TokenService tokenService = new TokenService(tokenRepository);
         Token token = tokenService.create(new ShopperId(userId));
@@ -46,20 +46,22 @@ public class PaymentResource {
 
     @POST
     @Path("/pay/{userId}/{tokenId}/{storeId}/{amount}")
-    @Produces(MediaType.TEXT_PLAIN)
-    public Uni<String> pay(@PathParam("userId") final int userId, @PathParam("tokenId") final String tokenId, @PathParam("storeId") final int storeId, @PathParam("amount") int amount) {
+    @Produces(MediaType.APPLICATION_JSON)
+    public Uni<Payment> pay(@PathParam("userId") final int userId, @PathParam("tokenId") final String tokenId, @PathParam("storeId") final int storeId, @PathParam("amount") int amount) {
         TokenService tokenService = new TokenService(tokenRepository);
         NotifyService paymentService = new NotifyService(notifyRepository);
         CoffeeStoreService coffeeStoreService = new CoffeeStoreService(coffeeStoreRepository);
+
+        //TODO: いつかはDBから取るようにしたい
         CoffeeStore store = coffeeStoreService.load(new StoreId(storeId));
 
         try {
             Payment payment = tokenService.use(new ShopperId(userId), new TokenId(tokenId), store, new Money(amount));
             paymentService.notify(payment);
-            return Uni.createFrom().item(String.format("%d 円の支払いが完了しました", amount));
+            return Uni.createFrom().item(payment);
         } catch (Exception e) {
             e.printStackTrace();
-            return Uni.createFrom().item(String.format(" %d 円の支払いができませんでした", amount));
+            throw e;
         }
     }
 
