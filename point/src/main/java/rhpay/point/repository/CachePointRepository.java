@@ -1,0 +1,38 @@
+package rhpay.point.repository;
+
+import rhpay.payment.domain.Payment;
+import rhpay.point.domain.Point;
+import rhpay.point.cache.PointEntity;
+import rhpay.payment.cache.ShopperKey;
+import rhpay.monitor.MonitorRepository;
+import io.quarkus.infinispan.client.Remote;
+import org.infinispan.client.hotrod.RemoteCache;
+
+import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
+import java.time.ZoneOffset;
+import java.util.HashMap;
+import java.util.Map;
+
+@RequestScoped
+@MonitorRepository
+public class CachePointRepository implements PointRepository {
+
+    @Inject
+    @Remote("point")
+    RemoteCache<ShopperKey, PointEntity> pointCache;
+
+    public Point givePoint(Payment payment) {
+
+        Map<String, Object> payInfo = new HashMap<>();
+        payInfo.put("ownerId", payment.getShopperId().value);
+        payInfo.put("amount", payment.getBillingAmount().value);
+        payInfo.put("storeId", payment.getStoreId().value);
+        payInfo.put("tokenId", payment.getTokenId().value);
+        payInfo.put("epoch", payment.getBillingDateTime().toEpochSecond(ZoneOffset.of("+09:00")));
+
+        PointEntity pointEntity = pointCache.execute("PointTask", payInfo, new ShopperKey(payment.getShopperId().value));
+
+        return new Point(payment.getShopperId(), pointEntity.getAmount());
+    }
+}

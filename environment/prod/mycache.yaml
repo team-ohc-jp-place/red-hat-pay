@@ -1,0 +1,44 @@
+apiVersion: infinispan.org/v2alpha1
+kind: Cache
+metadata:
+  name: paymentcachedefinition
+spec:
+  clusterName: example-infinispan
+  name: payment
+  template: <distributed-cache name="payment"><encoding media-type="application/x-protostream"/><groups enabled="true"/></distributed-cache>
+---
+apiVersion: infinispan.org/v2alpha1
+kind: Cache
+metadata:
+  name: walletcachedefinition
+spec:
+  clusterName: example-infinispan
+  name: wallet
+  template: <distributed-cache name="wallet"><encoding media-type="application/x-protostream"/><groups enabled="true"/></distributed-cache>
+---
+apiVersion: infinispan.org/v2alpha1
+kind: Cache
+metadata:
+  name: usercachedefinition
+spec:
+  clusterName: example-infinispan
+  name: user
+  template: <distributed-cache name="user"><encoding media-type="application/x-protostream"/><groups enabled="true"/></distributed-cache>
+---
+apiVersion: infinispan.org/v2alpha1
+kind: Cache
+metadata:
+  name: tokencachedefinition
+spec:
+  clusterName: example-infinispan
+  name: token
+  template: <distributed-cache name="token"><encoding media-type="application/x-protostream"/><groups enabled="true"/></distributed-cache>
+---
+apiVersion: infinispan.org/v2alpha1
+kind: Cache
+metadata:
+  name: pointcachedefinition
+spec:
+  clusterName: example-infinispan
+  name: point
+  template: <distributed-cache name="token"><encoding media-type="application/x-protostream"/><groups enabled="true"/></distributed-cache>
