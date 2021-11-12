@@ -1,4 +1,4 @@
-# Cache デプロイ
+# RHDG デプロイ
 oc new-app httpd~./artifacts --name=httpd
 echo "sleep 60"
 sleep 60
@@ -9,6 +9,14 @@ sleep 60
 oc apply -f create_data_grid.yaml
 #oc apply -f grafana_datasource.yaml
 #oc apply -f put_schema.yaml
+
+# Cache 作成
+oc apply -f mycache.yaml
+
+
+
+
+
 
 
 
