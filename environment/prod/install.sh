@@ -13,7 +13,9 @@ oc apply -f create_data_grid.yaml
 # Cache 作成
 oc apply -f mycache.yaml
 
-
+# AMQ Streams デプロイ
+oc apply -f create_kafka_cluster.yaml
+oc apply -f create_kafka_topic.yaml
 
 
 
@@ -30,3 +32,11 @@ oc apply -f mycache.yaml
 # clean up
 #oc delete is,bc,deploy,svc -l app=httpd
 #oc delete infinispan example-infinispan
+#oc delete cache paymentcachedefinition
+#oc delete cache pointcachedefinition
+#oc delete cache tokencachedefinition
+#oc delete cache usercachedefinition
+#oc delete cache walletcachedefinition
+#oc delete kafka my-cluster
+#oc delete kafkatopic point
+#oc delete kafkatopic payment
