@@ -1,4 +1,4 @@
-# RHDG デプロイ
+# Deploying DataGrid
 oc new-app httpd~./artifacts --name=httpd
 echo "sleep 60"
 sleep 60
@@ -9,17 +9,17 @@ sleep 60
 oc apply -f create_data_grid.yaml
 #oc apply -f grafana_datasource.yaml
 #oc apply -f put_schema.yaml
-
-# Cache 作成
 oc apply -f mycache.yaml
 
-# AMQ Streams デプロイ
+# Deploying AMQ Streams cluster and topics
 oc apply -f create_kafka_cluster.yaml
 oc apply -f create_kafka_topic.yaml
 
-
-
-
+# Deploying Applications
+oc apply -f deploy_app.yaml 
+oc expose deploy payment
+oc expose deploy point
+oc expose svc payment
 
 
 # Grafana
@@ -40,3 +40,8 @@ oc apply -f create_kafka_topic.yaml
 #oc delete kafka my-cluster
 #oc delete kafkatopic point
 #oc delete kafkatopic payment
+#oc delete deploy payment
+#oc delete deploy point
+#oc delete svc payment
+#oc delete svc point
+#oc delete route payment

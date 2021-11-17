@@ -40,3 +40,7 @@ spec:
                 clusterName: example-infinispan
                 infinispan_cr: example-infinispan
             topologyKey: "kubernetes.io/hostname"
+  security:
+    endpointAuthentication: false
+    endpointEncryption:
+      type: None
