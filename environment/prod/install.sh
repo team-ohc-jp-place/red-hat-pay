@@ -17,9 +17,6 @@ oc apply -f create_kafka_topic.yaml
 
 # Deploying Applications
 oc apply -f deploy_app.yaml 
-oc expose deploy payment
-oc expose deploy point
-oc expose svc payment
 
 
 # Grafana
