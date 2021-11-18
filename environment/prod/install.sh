@@ -18,6 +18,9 @@ oc apply -f create_kafka_topic.yaml
 # Deploying Applications
 oc apply -f deploy_app.yaml 
 
+# Enabling monitoring for user-defined projects
+oc apply -f cluster-monitoring-config.yaml
+
 
 # Grafana
 #oc apply -f service-account.yaml
