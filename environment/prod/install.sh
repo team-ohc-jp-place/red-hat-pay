@@ -30,9 +30,8 @@ oc apply -f grafana_datasource.yaml
 oc apply -f infinispan-operator-config.yaml
 oc apply -f create_grafana_dashboard.yaml
 
-
-
-
+# Cryostat
+oc apply -f create_cryostat.yaml
 
 # clean up
 #oc delete is,bc,deploy,svc -l app=httpd
@@ -55,3 +54,4 @@ oc apply -f create_grafana_dashboard.yaml
 #oc delete sa infinispan-monitoring
 #oc delete grafanadatasource grafanadatasource
 #oc delete grafanadashboard simple-dashboard
+#oc delete cryostat cryostat-sample

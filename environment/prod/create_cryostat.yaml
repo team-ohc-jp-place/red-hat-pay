@@ -1,0 +1,18 @@
+apiVersion: operator.cryostat.io/v1beta1
+kind: Cryostat
+metadata:
+  name: cryostat-sample
+spec:
+  enableCertManager: false
+  eventTemplates: []
+  minimal: false
+  storageOptions:
+    pvc:
+      annotations: {}
+      labels:
+        app: cryostat
+      spec: 
+        storageClassName: gp2
+        resources:
+          requests:
+            storage: 1Gi
