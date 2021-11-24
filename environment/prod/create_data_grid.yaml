@@ -42,3 +42,18 @@ spec:
     endpointAuthentication: false
     endpointEncryption:
       type: None
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app: infinispan-service
+  name: infinispan-console
+spec:
+  port:
+    targetPort: infinispan
+  to:
+    kind: Service
+    name: infinispan-service
+    weight: 100
+  wildcardPolicy: None
