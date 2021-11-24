@@ -19,6 +19,8 @@ spec:
         image: quay.io/mamoru1112/payment-jvm:latest
         ports:
         - containerPort: 8080
+        - containerPort: 9091
+          protocol: TCP
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -41,6 +43,8 @@ spec:
         image: quay.io/mamoru1112/point-jvm:latest
         ports:
         - containerPort: 8080
+        - containerPort: 9091
+          protocol: TCP
 ---
 apiVersion: v1
 kind: Service
@@ -50,9 +54,14 @@ metadata:
   name: payment
 spec:
   ports:
-  - port: 8080
+  - name: 8080-tcp
+    port: 8080
     protocol: TCP
     targetPort: 8080
+  - name: jfr-jmx
+    port: 9091
+    protocol: TCP
+    targetPort: 9091
   selector:
     app: payment
   sessionAffinity: None
@@ -66,9 +75,14 @@ metadata:
   name: point
 spec:
   ports:
-  - port: 8080
+  - name: 8080-tcp
+    port: 8080
     protocol: TCP
     targetPort: 8080
+  - name: jfr-jmx
+    port: 9091
+    protocol: TCP
+    targetPort: 9091
   selector:
     app: point
   sessionAffinity: None
