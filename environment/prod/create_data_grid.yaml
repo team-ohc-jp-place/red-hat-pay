@@ -9,9 +9,7 @@ spec:
   dependencies:
     artifacts:
       - url: http://httpd:8080/domain-1.0-SNAPSHOT.jar
-        hash: md5:25c3fc8544c0073eef4234fd885df773
       - url: http://httpd:8080/cache-1.0-SNAPSHOT.jar
-        hash: md5:02d4c22efe6790e3b6f29e66a253f7cd
   image: quay.io/infinispan/server:latest
   service:
     type: DataGrid
