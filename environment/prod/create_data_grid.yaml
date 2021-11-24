@@ -8,10 +8,8 @@ spec:
   replicas: 2
   dependencies:
     artifacts:
-      - url: http://web-test/domain-1.0-SNAPSHOT.jar
-        hash: md5:0d7c7f5c1b3bd1c88e519800ecfa6a0a
-      - url: http://web-test/cache-1.0-SNAPSHOT.jar
-        hash: md5:cfff036fa4403b0112930940985e4c7a
+      - url: http://httpd:8080/domain-1.0-SNAPSHOT.jar
+      - url: http://httpd:8080/cache-1.0-SNAPSHOT.jar
   image: quay.io/infinispan/server:latest
   service:
     type: DataGrid
@@ -40,3 +38,7 @@ spec:
                 clusterName: example-infinispan
                 infinispan_cr: example-infinispan
             topologyKey: "kubernetes.io/hostname"
+  security:
+    endpointAuthentication: false
+    endpointEncryption:
+      type: None

@@ -1,0 +1,77 @@
+// File name: payment.proto
+// Generated from : rhpay.payment.system.PaymentSchema
+
+syntax = "proto2";
+
+package rhpay.payment.cache;
+
+
+
+message PaymentResponse {
+   
+   optional int32 storeId = 1 [default = 0];
+   
+   optional int32 shopperId = 2 [default = 0];
+   
+   optional string tokenId = 3;
+   
+   optional int32 pillingAmount = 4 [default = 0];
+   
+   optional int64 billingDateTime = 5 [default = 0];
+}
+
+
+message PaymentEntity {
+   
+   optional int32 storeId = 1 [default = 0];
+   
+   optional int32 billingAmount = 2 [default = 0];
+   
+   optional int64 billingDateTime = 3 [default = 0];
+}
+
+
+enum TokenStatus {
+   
+   UNUSED = 0;
+   
+   PROCESSING = 1;
+   
+   USED = 2;
+   
+   FAILED = 3;
+}
+
+
+message TokenEntity {
+   
+   optional TokenStatus status = 1;
+}
+
+
+message ShopperKey {
+   
+   optional int32 ownerId = 1 [default = 0];
+}
+
+
+message WalletEntity {
+   
+   optional int32 chargedMoney = 1 [default = 0];
+   
+   optional int32 autoChargeMoney = 2 [default = 0];
+}
+
+
+message ShopperEntity {
+   
+   optional string name = 1;
+}
+
+
+message TokenKey {
+   
+   optional int32 ownerId = 1 [default = 0];
+   
+   optional string tokenId = 2;
+}

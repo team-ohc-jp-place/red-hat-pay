@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment
+  labels:
+    app: payment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment
+  template:
+    metadata:
+      labels:
+        app: payment
+    spec:
+      containers:
+      - name: payment-jvm
+        image: quay.io/mamoru1112/payment-jvm:latest
+        ports:
+        - containerPort: 8080
+        - containerPort: 9091
+          protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: point
+  labels:
+    app: point
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: point
+  template:
+    metadata:
+      labels:
+        app: point
+    spec:
+      containers:
+      - name: point-jvm
+        image: quay.io/mamoru1112/point-jvm:latest
+        ports:
+        - containerPort: 8080
+        - containerPort: 9091
+          protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: payment
+  name: payment
+spec:
+  ports:
+  - name: 8080-tcp
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  - name: jfr-jmx
+    port: 9091
+    protocol: TCP
+    targetPort: 9091
+  selector:
+    app: payment
+  sessionAffinity: None
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: point
+  name: point
+spec:
+  ports:
+  - name: 8080-tcp
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  - name: jfr-jmx
+    port: 9091
+    protocol: TCP
+    targetPort: 9091
+  selector:
+    app: point
+  sessionAffinity: None
+  type: ClusterIP
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app: payment
+  name: payment
+spec:
+  port:
+    targetPort: 8080
+  to:
+    kind: Service
+    name: payment
+    weight: 100
+  wildcardPolicy: None
