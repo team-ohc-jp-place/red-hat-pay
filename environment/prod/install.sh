@@ -1,4 +1,8 @@
 # DataGrid
+rm -f ./artifacts/*.jar
+cp ../../cache/target/cache-1.0-SNAPSHOT.jar ./artifacts/
+cp ../../domain/target/domain-1.0-SNAPSHOT.jar ./artifacts/
+
 oc new-app httpd~./artifacts --name=httpd
 echo "sleep 60"
 sleep 60
@@ -9,8 +13,6 @@ sleep 60
 oc apply -f create_data_grid.yaml
 oc apply -f mycache.yaml
 sleep 60
-oc rsync proto/ example-infinispan-0:/opt/infinispan/proto
-oc rsync proto/ example-infinispan-1:/opt/infinispan/proto
 oc apply -f put_schema.yaml
 
 # AMQ Streams

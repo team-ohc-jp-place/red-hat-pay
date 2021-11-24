@@ -1,12 +1,12 @@
 apiVersion: infinispan.org/v2alpha1
 kind: Batch
 metadata:
-  name: mybatch
+  name: PutSchema
 spec:
   cluster: example-infinispan
   config: |
     echo "creating schema..."
-    schema --upload=proto/payment.proto payment.proto
-    schema --upload=proto/point.proto point.proto
+    schema --upload=../../cache/target/classes/proto/payment.proto payment.proto
+    schema --upload=../../cache/target/classes/proto/PointSchema.proto PointSchema.proto
     echo "list Protobuf schema"
     ls schemas
