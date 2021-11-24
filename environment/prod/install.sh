@@ -8,6 +8,9 @@ sleep 60
 
 oc apply -f create_data_grid.yaml
 oc apply -f mycache.yaml
+sleep 60
+oc rsync proto/ example-infinispan-0:/opt/infinispan/proto
+oc rsync proto/ example-infinispan-1:/opt/infinispan/proto
 oc apply -f put_schema.yaml
 
 # AMQ Streams
