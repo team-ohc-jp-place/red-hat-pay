@@ -9,6 +9,7 @@ import rhpay.payment.cache.*;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
+import java.util.Set;
 
 @ApplicationScoped
 public class InitialProcess {
@@ -28,13 +29,18 @@ public class InitialProcess {
                     + "</distributed-cache>";
 
     void onStart(@Observes StartupEvent ev) {
-        RemoteCache<ShopperKey, ShopperEntity> userCache = cacheManager.administration().getOrCreateCache("user", new XMLStringConfiguration(String.format(CACHE_CONFIG, "user")));
-        userCache.put(new ShopperKey(1), new ShopperEntity("user1"));
-
-        RemoteCache<ShopperKey, WalletEntity> walletCache = cacheManager.administration().getOrCreateCache("wallet", new XMLStringConfiguration(String.format(CACHE_CONFIG, "wallet")));
-        walletCache.put(new ShopperKey(1), new WalletEntity(2000, 3000));
-
-        RemoteCache<TokenKey, TokenEntity> tokenCache = cacheManager.administration().getOrCreateCache("token", new XMLStringConfiguration(String.format(CACHE_CONFIG, "token")));
-        RemoteCache<TokenKey, PaymentEntity> paymentCache = cacheManager.administration().getOrCreateCache("payment", new XMLStringConfiguration(String.format(CACHE_CONFIG, "payment")));
+        Set<String> cacheNames = cacheManager.getCacheNames();
+        if (cacheNames.contains("user")) {
+            cacheManager.administration().getOrCreateCache("user", new XMLStringConfiguration(String.format(CACHE_CONFIG, "user")));
+        }
+        if (cacheNames.contains("wallet")) {
+            cacheManager.administration().getOrCreateCache("wallet", new XMLStringConfiguration(String.format(CACHE_CONFIG, "wallet")));
+        }
+        if (cacheNames.contains("token")) {
+            cacheManager.administration().getOrCreateCache("token", new XMLStringConfiguration(String.format(CACHE_CONFIG, "token")));
+        }
+        if (cacheNames.contains("payment")) {
+            cacheManager.administration().getOrCreateCache("payment", new XMLStringConfiguration(String.format(CACHE_CONFIG, "payment")));
+        }
     }
 }
