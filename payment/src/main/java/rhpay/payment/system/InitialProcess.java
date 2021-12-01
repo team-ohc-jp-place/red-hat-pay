@@ -30,16 +30,16 @@ public class InitialProcess {
 
     void onStart(@Observes StartupEvent ev) {
         Set<String> cacheNames = cacheManager.getCacheNames();
-        if (cacheNames.contains("user")) {
+        if (!cacheNames.contains("user")) {
             cacheManager.administration().getOrCreateCache("user", new XMLStringConfiguration(String.format(CACHE_CONFIG, "user")));
         }
-        if (cacheNames.contains("wallet")) {
+        if (!cacheNames.contains("wallet")) {
             cacheManager.administration().getOrCreateCache("wallet", new XMLStringConfiguration(String.format(CACHE_CONFIG, "wallet")));
         }
-        if (cacheNames.contains("token")) {
+        if (!cacheNames.contains("token")) {
             cacheManager.administration().getOrCreateCache("token", new XMLStringConfiguration(String.format(CACHE_CONFIG, "token")));
         }
-        if (cacheNames.contains("payment")) {
+        if (!cacheNames.contains("payment")) {
             cacheManager.administration().getOrCreateCache("payment", new XMLStringConfiguration(String.format(CACHE_CONFIG, "payment")));
         }
     }
