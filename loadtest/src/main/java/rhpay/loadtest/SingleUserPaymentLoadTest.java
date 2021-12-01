@@ -139,7 +139,7 @@ public class SingleUserPaymentLoadTest {
 
     private static final String hostname = "127.0.0.1";
     private static final int port = 11222;
-    private static final boolean isAuth = true;
+    private static final boolean isAuth = false;
     private static final String user = "admin";
     private static final String password = "password";
 
@@ -147,8 +147,10 @@ public class SingleUserPaymentLoadTest {
             "<distributed-cache name=\"%s\" mode=\"SYNC\" remote-timeout=\"17500\">"
                     + " <encoding media-type=\"application/x-protostream\"/>"
                     + " <groups enabled=\"true\"/>"
-                    + "<locking concurrency-level=\"32\" acquire-timeout=\"1000000\" striping=\"false\"/>"
-                    + "<state-transfer timeout=\"1000000\"/>"
+//                    + "<locking/>"
+//                    + "<locking concurrency-level=\"32\" acquire-timeout=\"1000000\" striping=\"false\"/>"
+//                    + "<state-transfer timeout=\"1000000\"/>"
+//                    + "<transaction auto-commit=\"false\" mode=\"BATCH\" notifications=\"false\" transaction-manager-lookup=\"org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup\"/>"
                     + "</distributed-cache>";
 
     private static Configuration createConfiguration() throws Exception {
@@ -162,7 +164,7 @@ public class SingleUserPaymentLoadTest {
                 .addServer()
                 .host(hostname)
                 .port(port)
-                .addContextInitializer("chiroito.cache.UserSchemaImpl")
+                .addContextInitializer("rhpay.loadtest.system.PaymentSchemaImpl")
                 // デフォルトは10
                 .asyncExecutorFactory().addExecutorProperty("infinispan.client.hotrod.default_executor_factory.pool_size", "10")
                 //デフォルトは100,000

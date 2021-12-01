@@ -40,6 +40,10 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-clustered-lock</artifactId>
+        </dependency>
+        <dependency>
             <groupId>rhpay</groupId>
             <artifactId>domain</artifactId>
             <version>1.0-SNAPSHOT</version>

@@ -1,17 +1,20 @@
 package rhpay.payment.repository;
 
+import org.infinispan.lock.EmbeddedClusteredLockManagerFactory;
+import org.infinispan.lock.api.ClusteredLock;
+import org.infinispan.lock.api.ClusteredLockManager;
 import rhpay.payment.cache.*;
-import rhpay.monitoring.ShopperFunctionEvent;
-import rhpay.monitoring.TokenFunctionEvent;
-import jdk.jfr.Event;
 import org.infinispan.Cache;
-import org.infinispan.util.function.SerializableBiFunction;
 import rhpay.payment.cache.TokenStatus;
 import rhpay.payment.domain.*;
+import rhpay.payment.repository.function.*;
 
 import java.time.ZoneOffset;
+import java.util.concurrent.TimeUnit;
 
 public class CacheBillingRepository implements BillingRepository {
+
+    private static final String LOCK_NAME = "lock";
 
     private final Cache<TokenKey, TokenEntity> tokenCache;
     private final Cache<ShopperKey, WalletEntity> walletCache;
@@ -23,158 +26,80 @@ public class CacheBillingRepository implements BillingRepository {
         this.paymentCache = paymentCache;
     }
 
-    public Payment bill(ShopperId shopperId, TokenId tokenId, Billing bill) {
+    private Payment payment;
+
+    public void setPayment(Payment payment) {
+        this.payment = payment;
+    }
+
+    public Payment bill(ShopperId shopperId, TokenId tokenId, Billing bill) throws PaymentException {
 
         final TokenKey tokenKey = new TokenKey(shopperId.value, tokenId.value);
+        final ShopperKey shopperKey = new ShopperKey(shopperId.value);
+        ClusteredLockManager clusteredLockManager = EmbeddedClusteredLockManagerFactory.from(walletCache.getCacheManager());
+        if (!clusteredLockManager.isDefined(LOCK_NAME)) {
+            clusteredLockManager.defineLock(LOCK_NAME);
+        }
+        ClusteredLock clusteredLock = clusteredLockManager.get(LOCK_NAME);
 
         try {
             // 指定されたトークンを処理中にする
             tokenCache.compute(tokenKey, new ProcessingTokenFunction());
 
-            // 財布から請求額を出す
-            final BillingFunction billingFunction = new BillingFunction(bill, tokenId);
-            final ShopperKey shopperKey = new ShopperKey(shopperId.value);
-            walletCache.compute(shopperKey, billingFunction);
-
             // 財布からお金を支払う
-            Payment payment = billingFunction.getPayment();
+            clusteredLock.tryLock(1, TimeUnit.SECONDS).whenComplete((ret, exception) -> {
+                if (ret) {
+                    // ロックが取れたら整合性を必要とする処理をする
+                    try {
+                        WalletEntity cachedWallet = walletCache.get(shopperKey);
+                        Shopper owner = new Shopper(new ShopperId(shopperKey.getOwnerId()), new FullName(""));
+                        Wallet wallet = new Wallet(owner, new Money(cachedWallet.getChargedMoney()), new Money(cachedWallet.getAutoChargeMoney()));
+
+                        Payment payment = wallet.pay(bill, tokenId);
+                        this.setPayment(payment);
+
+                        walletCache.put(shopperKey, new WalletEntity(wallet.getChargedMoney().value, wallet.getAutoChargeMoney().value));
+
+                    } finally {
+                        // ロック期間の最後でアンロックする
+                        clusteredLock.unlock();
+                    }
+                } else {
+                    throw new RuntimeException("Fail to get the lock");
+                }
+            }).get();
 
             // トークンを使用済みにする
             tokenCache.compute(tokenKey, new UsedTokenFunction());
 
-            paymentCache.put(tokenKey, new PaymentEntity(payment.getStoreId().value, payment.getBillingAmount().value, payment.getBillingDateTime().toEpochSecond(ZoneOffset.of("+09:00"))));
+            PaymentEntity paymentEntity = new PaymentEntity(payment.getStoreId().value, payment.getBillingAmount().value, payment.getBillingDateTime().toEpochSecond(ZoneOffset.of("+09:00")));
+            paymentCache.put(tokenKey, paymentEntity);
 
             return payment;
 
         } catch (Exception e) {
             // 例外が出たらトークンを失敗にする
+            PaymentException thrw = new PaymentException("Fail to pay");
             try {
-                tokenCache.compute(tokenKey, new FailedTokenFunction(e));
+
+                TokenEntity tokenEntity = tokenCache.get(tokenKey);
+                if (tokenEntity == null) {
+                    thrw = new PaymentException(String.format("This token is not exist : %s", tokenKey));
+                } else if (tokenEntity.getStatus().equals(TokenStatus.USED)) {
+                    thrw = new PaymentException(String.format("Attempted to change status of cached tokens to 'failed' even though it is 'used' : %s", tokenKey));
+                }
+
+                tokenCache.compute(tokenKey, new FailedTokenFunction());
             } catch (Exception e1) {
-                throw e1;
+                // 例外処理で例外が出たメッセージを出す
+                thrw = new PaymentException("Exception is occurred again in catch statement");
+                e.addSuppressed(e1);
+                throw thrw;
+            } finally {
+                thrw.addSuppressed(e);
             }
-            throw e;
-        }
-    }
-}
-
-/**
- * 財布から請求された金額を支払う処理
- */
-class BillingFunction implements SerializableBiFunction<ShopperKey, WalletEntity, WalletEntity> {
-
-    private final Billing bill;
-    private final TokenId tokenId;
-
-    public BillingFunction(Billing bill, TokenId tokenId) {
-        this.bill = bill;
-        this.tokenId = tokenId;
-    }
-
-    private Payment payment = null;
-
-    public Payment getPayment() {
-        return payment;
-    }
-
-    @Override
-    public WalletEntity apply(ShopperKey ownerKey, WalletEntity cachedWallet) {
-
-        Event functionEvent = new ShopperFunctionEvent("BillingFunction", ownerKey.getOwnerId());
-        functionEvent.begin();
-
-        try {
-            if (cachedWallet == null) {
-                throw new RuntimeException(String.format("このユーザの財布は登録されていません %s", ownerKey));
-            }
-
-            Shopper owner = new Shopper(new ShopperId(ownerKey.getOwnerId()), new FullName(""));
-            Wallet wallet = new Wallet(owner, new Money(cachedWallet.getChargedMoney()), new Money(cachedWallet.getAutoChargeMoney()));
-
-            payment = wallet.pay(bill, tokenId);
-
-            return new WalletEntity(wallet.getChargedMoney().value, wallet.getAutoChargeMoney().value);
-        } finally {
-            functionEvent.commit();
-        }
-    }
-}
-
-/**
- * 未使用のトークンの状態を処理中にする処理
- */
-class ProcessingTokenFunction implements SerializableBiFunction<TokenKey, TokenEntity, TokenEntity> {
-
-    @Override
-    public TokenEntity apply(TokenKey tokenKey, TokenEntity cachedEntity) {
-        Event functionEvent = new TokenFunctionEvent("ProcessingTokenFunction", tokenKey.getOwnerId(), tokenKey.getTokenId());
-        functionEvent.begin();
-        try {
-            if (cachedEntity == null) {
-                throw new RuntimeException(String.format("指定されたトークンは存在しません %s", tokenKey.toString()));
-            }
-            if (!cachedEntity.getStatus().equals(TokenStatus.UNUSED)) {
-                throw new RuntimeException(String.format("キャッシュされているトークンのステータスが %s なのに 処理中 に変更しようとしました %s", cachedEntity.getStatus().getName(), tokenKey.toString()));
-            }
-            return new TokenEntity(TokenStatus.PROCESSING);
-        } finally {
-            functionEvent.commit();
-        }
-    }
-}
-
-/**
- * 処理中のトークンの状態を使用済みにする処理
- */
-class UsedTokenFunction implements SerializableBiFunction<TokenKey, TokenEntity, TokenEntity> {
-
-    @Override
-    public TokenEntity apply(TokenKey tokenKey, TokenEntity cachedEntity) {
-        Event functionEvent = new TokenFunctionEvent("ProcessingTokenFunction", tokenKey.getOwnerId(), tokenKey.getTokenId());
-        functionEvent.begin();
-        try {
-            if (cachedEntity == null) {
-                throw new RuntimeException(String.format("指定されたトークンは存在しません %s", tokenKey.toString()));
-            }
-            if (!cachedEntity.getStatus().equals(TokenStatus.PROCESSING)) {
-                throw new RuntimeException(String.format("キャッシュされているトークンのステータスが %s なのに 使用済み に変更しようとしました %s", cachedEntity.getStatus().getName(), tokenKey.toString()));
-            }
-            return new TokenEntity(TokenStatus.USED);
-        } finally {
-            functionEvent.commit();
-        }
-    }
-}
-
-/**
- * 処理中のトークンの状態を失敗にする処理
- */
-class FailedTokenFunction implements SerializableBiFunction<TokenKey, TokenEntity, TokenEntity> {
-
-    private final Exception cause;
-
-    public FailedTokenFunction(Exception cause) {
-        this.cause = cause;
-    }
-
-    @Override
-    public TokenEntity apply(TokenKey tokenKey, TokenEntity cachedEntity) {
-        Event functionEvent = new TokenFunctionEvent("ProcessingTokenFunction", tokenKey.getOwnerId(), tokenKey.getTokenId());
-        functionEvent.begin();
-        try {
-            if (cachedEntity == null) {
-                RuntimeException newException = new RuntimeException(String.format("指定されたトークンは存在しません %s", tokenKey.toString()));
-                newException.addSuppressed(cause);
-                throw newException;
-            }
-            if (cachedEntity.getStatus().equals(TokenStatus.USED)) {
-                RuntimeException newException = new RuntimeException(String.format("キャッシュされているトークンのステータスが使用済みなのに失敗に変更しようとしました %s", tokenKey.toString()));
-                newException.addSuppressed(cause);
-                throw newException;
-            }
-            return new TokenEntity(TokenStatus.FAILED);
-        } finally {
-            functionEvent.commit();
+            thrw.printStackTrace();
+            throw thrw;
         }
     }
 }

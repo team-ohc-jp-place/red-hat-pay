@@ -1,10 +1,7 @@
 package rhpay.payment.service;
 
+import rhpay.payment.domain.*;
 import rhpay.payment.repository.BillingRepository;
-import rhpay.payment.domain.Billing;
-import rhpay.payment.domain.Payment;
-import rhpay.payment.domain.ShopperId;
-import rhpay.payment.domain.TokenId;
 
 public class BillingService {
 
@@ -14,7 +11,7 @@ public class BillingService {
         this.billingRepository = billingRepository;
     }
 
-    public Payment bill(ShopperId shopperId, TokenId tokenId, Billing bill) {
+    public Payment bill(ShopperId shopperId, TokenId tokenId, Billing bill) throws PaymentException {
         return billingRepository.bill(shopperId, tokenId, bill);
     }
 }
