@@ -32,10 +32,10 @@ public class CacheBillingRepository implements BillingRepository {
         this.payment = payment;
     }
 
-    public Payment bill(ShopperId shopperId, TokenId tokenId, Billing bill) throws PaymentException {
+    public Payment bill(Shopper shopper, TokenId tokenId, Billing bill) throws PaymentException {
 
-        final TokenKey tokenKey = new TokenKey(shopperId.value, tokenId.value);
-        final ShopperKey shopperKey = new ShopperKey(shopperId.value);
+        final TokenKey tokenKey = new TokenKey(shopper.getId().value, tokenId.value);
+        final ShopperKey shopperKey = new ShopperKey(shopper.getId().value);
         ClusteredLockManager clusteredLockManager = EmbeddedClusteredLockManagerFactory.from(walletCache.getCacheManager());
         if (!clusteredLockManager.isDefined(LOCK_NAME)) {
             clusteredLockManager.defineLock(LOCK_NAME);
@@ -52,8 +52,7 @@ public class CacheBillingRepository implements BillingRepository {
                     // ロックが取れたら整合性を必要とする処理をする
                     try {
                         WalletEntity cachedWallet = walletCache.get(shopperKey);
-                        Shopper owner = new Shopper(new ShopperId(shopperKey.getOwnerId()), new FullName(""));
-                        Wallet wallet = new Wallet(owner, new Money(cachedWallet.getChargedMoney()), new Money(cachedWallet.getAutoChargeMoney()));
+                        Wallet wallet = new Wallet(shopper, new Money(cachedWallet.getChargedMoney()), new Money(cachedWallet.getAutoChargeMoney()));
 
                         Payment payment = wallet.pay(bill, tokenId);
                         this.setPayment(payment);

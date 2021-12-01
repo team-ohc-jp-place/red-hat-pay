@@ -11,7 +11,7 @@ public class BillingService {
         this.billingRepository = billingRepository;
     }
 
-    public Payment bill(ShopperId shopperId, TokenId tokenId, Billing bill) throws PaymentException {
-        return billingRepository.bill(shopperId, tokenId, bill);
+    public Payment bill(Shopper shopper, TokenId tokenId, Billing bill) throws PaymentException {
+        return billingRepository.bill(shopper, tokenId, bill);
     }
 }
