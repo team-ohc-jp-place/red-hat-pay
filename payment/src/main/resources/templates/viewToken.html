@@ -31,8 +31,12 @@
 状態：{token.getStatus().name}<br/>
 {#if payment != null}
 使用店舗ID：{payment.getStoreId().value}<br/>
-支払金額：{payment.billingAmount().value}<br/>
+支払金額：{payment.billingAmount().value} 円<br/>
 支払日時：{payment.billingDateTime}<br/>
+<br/>
+<form method="post" name="form" action="/createToken/1">
+    <a href="javascript:form.submit()">次のトークンを表示</a>
+</form>
 {/if}
 </body>
 </html>
