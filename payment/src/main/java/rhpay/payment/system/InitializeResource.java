@@ -40,7 +40,7 @@ public class InitializeResource {
     @GET
     @Path("/init/{userNum}/{amount}/{autoCharge}")
     @Produces(MediaType.TEXT_HTML)
-    public Uni<String> createTokenAPI(@PathParam("userNum") final int userNum, @PathParam("amount") final int amount, @PathParam("autoCharge") final int autoCharge) {
+    public Uni<String> initialize(@PathParam("userNum") final int userNum, @PathParam("amount") final int amount, @PathParam("autoCharge") final int autoCharge) {
 
         // キャッシュのデータを全てクリア
         paymentCache.clear();
