@@ -28,11 +28,11 @@
 このQRコードを店員に見せてください
 <div id="qrcode"></div>
 <br/>
-状態：{token.getStatus().name}
+状態：{token.getStatus().name}<br/>
 {#if payment != null}
-仕様店舗ID：{payment.getStoreId().value}
-支払金額：{payment.billingAmount().value}
-支払日時：{payment.billingDateTime}
+使用店舗ID：{payment.getStoreId().value}<br/>
+支払金額：{payment.billingAmount().value}<br/>
+支払日時：{payment.billingDateTime}<br/>
 {/if}
 </body>
 </html>
