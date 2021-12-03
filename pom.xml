@@ -13,6 +13,7 @@
     <module>payment</module>
     <module>point</module>
     <module>loadtest</module>
+    <module>monolith</module>
   </modules>
 
   <properties>
