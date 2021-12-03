@@ -16,13 +16,13 @@ import java.util.Map;
 
 @RequestScoped
 @MonitorRepository
-public class CachePointRepository implements PointRepository {
+public class CachePointDelegateRepository implements PointDelegateRepository {
 
     @Inject
     @Remote("point")
     RemoteCache<ShopperKey, PointEntity> pointCache;
 
-    public Point givePoint(Payment payment) {
+    public Point invoke(Payment payment) {
 
         Map<String, Object> payInfo = new HashMap<>();
         payInfo.put("ownerId", payment.getShopperId().value);
