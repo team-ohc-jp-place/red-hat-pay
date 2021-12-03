@@ -15,4 +15,8 @@ public class PaymentService {
     public Payment load(ShopperId shopperId, TokenId tokenId) {
         return paymentRepository.load(shopperId, tokenId);
     }
+
+    public void store(Payment payment){
+        paymentRepository.store(payment);
+    }
 }

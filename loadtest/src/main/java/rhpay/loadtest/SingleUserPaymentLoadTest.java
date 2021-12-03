@@ -1,13 +1,13 @@
 package rhpay.loadtest;
 
+import org.infinispan.lock.EmbeddedClusteredLockManagerFactory;
+import org.infinispan.lock.api.ClusteredLock;
+import org.infinispan.lock.api.ClusteredLockManager;
+import rhpay.payment.cache.*;
 import rhpay.payment.domain.ShopperId;
 import rhpay.payment.domain.Token;
 import rhpay.payment.domain.TokenId;
 import rhpay.payment.domain.TokenStatus;
-import rhpay.payment.cache.ShopperKey;
-import rhpay.payment.cache.TokenEntity;
-import rhpay.payment.cache.TokenKey;
-import rhpay.payment.cache.WalletEntity;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SingleUserPaymentLoadTest {
 
     public static final int rushThreadNum = 10;
-    public static final int tokenNum = 100_000;
+    public static final int tokenNum = 10_000;
 
     private static final String TOKEN_CACHE_NAME = "token";
     private static final String WALLET_CACHE_NAME = "wallet";
@@ -43,12 +43,16 @@ public class SingleUserPaymentLoadTest {
                 new XMLStringConfiguration(String.format(CACHE_CONFIG, WALLET_CACHE_NAME)));
         RemoteCache<ShopperKey, WalletEntity> paymentCache = manager.administration().getOrCreateCache(PAYMENT_CACHE_NAME,
                 new XMLStringConfiguration(String.format(CACHE_CONFIG, PAYMENT_CACHE_NAME)));
+        RemoteCache<ShopperKey, ShopperEntity> shopperCache = manager.administration().getOrCreateCache("user",
+                new XMLStringConfiguration(String.format(CACHE_CONFIG, "user")));
         walletCache.clear();
         tokenCache.clear();
         paymentCache.clear();
+        shopperCache.clear();
 
         final ShopperId shopperId = new ShopperId(1);
 
+        shopperCache.put(new ShopperKey(shopperId.value), new ShopperEntity("user1"));
         walletCache.put(new ShopperKey(shopperId.value), new WalletEntity(tokenNum, 0));
         System.out.println(walletCache.get(new ShopperKey(shopperId.value)));
 

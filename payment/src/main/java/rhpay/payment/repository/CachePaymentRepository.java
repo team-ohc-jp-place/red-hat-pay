@@ -32,4 +32,9 @@ public class CachePaymentRepository implements PaymentRepository {
         LocalDateTime billingDateTime = LocalDateTime.ofEpochSecond(paymentEntity.getBillingDateTime(), 0, ZoneOffset.of("+09:00"));
         return new Payment(storeId, shopperId, tokenId, billingAmount, billingDateTime);
     }
+
+    @Override
+    public void store(Payment payment) {
+        throw new UnsupportedOperationException();
+    }
 }

@@ -33,26 +33,24 @@ public class CacheTokenRepository implements TokenRepository {
     }
 
     @Override
-    public Payment use(ShopperId shopperId, TokenId tokenId, CoffeeStore store, Money amount) {
-
-        Map<String, Object> payInfo = new HashMap<>();
-        payInfo.put("shopperId", shopperId.value);
-        payInfo.put("tokenId", tokenId.value);
-        payInfo.put("amount", amount.value);
-        payInfo.put("storeId", store.getId().value);
-        payInfo.put("storeName", store.getName().value);
-
-        PaymentResponse paymentEntity = tokenCache.execute("PaymentTask", payInfo, new TokenKey(shopperId.value, tokenId.value));
-
-        Payment payment = new Payment(store.getId(), shopperId, tokenId, new Money(paymentEntity.getPillingAmount()), LocalDateTime.ofEpochSecond(paymentEntity.getBillingDateTime(), 0, ZoneOffset.of("+09:00")));
-
-        return payment;
-    }
-
-    @Override
     public Token load(ShopperId shopperId, TokenId tokenId) {
         TokenEntity tokenEntity = tokenCache.get(new TokenKey(shopperId.value, tokenId.value));
         return new Token(shopperId, tokenId, rhpay.payment.domain.TokenStatus.valueOf(tokenEntity.getStatus().toString()));
+    }
+
+    @Override
+    public Token processing(Token token) {
+        throw new UnsupportedOperationException("In this application, token is not used. Instead, it is delegated data grid.");
+    }
+
+    @Override
+    public Token used(Token token) {
+        throw new UnsupportedOperationException("In this application, token is not used. Instead, it is delegated data grid.");
+    }
+
+    @Override
+    public Token failed(Token token) {
+        throw new UnsupportedOperationException("In this application, token is not used. Instead, it is delegated data grid.");
     }
 
 

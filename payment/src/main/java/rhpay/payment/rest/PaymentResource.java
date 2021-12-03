@@ -35,6 +35,9 @@ public class PaymentResource {
     @Inject
     PaymentRepository paymentRepository;
 
+    @Inject
+    DelegateRepository delegateRepository;
+
     @POST
     @Path("/pay/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -48,7 +51,7 @@ public class PaymentResource {
     @Path("/pay/{userId}/{tokenId}/{storeId}/{amount}")
     @Produces(MediaType.APPLICATION_JSON)
     public Uni<Payment> pay(@PathParam("userId") final int userId, @PathParam("tokenId") final String tokenId, @PathParam("storeId") final int storeId, @PathParam("amount") int amount) {
-        TokenService tokenService = new TokenService(tokenRepository);
+        DelegateService delegateService = new DelegateService(delegateRepository);
         NotifyService paymentService = new NotifyService(notifyRepository);
         CoffeeStoreService coffeeStoreService = new CoffeeStoreService(coffeeStoreRepository);
 
@@ -56,7 +59,7 @@ public class PaymentResource {
         CoffeeStore store = coffeeStoreService.load(new StoreId(storeId));
 
         try {
-            Payment payment = tokenService.use(new ShopperId(userId), new TokenId(tokenId), store, new Money(amount));
+            Payment payment = delegateService.invoke(new ShopperId(userId), new TokenId(tokenId), store, new Money(amount));
             paymentService.notify(payment);
             return Uni.createFrom().item(payment);
         } catch (Exception e) {
@@ -128,13 +131,17 @@ public class PaymentResource {
     public Uni<String> viewTokenUI(@PathParam("shopperId") final int shopperId, @PathParam("tokenId") final String tokenId) {
         ShopperId sId = new ShopperId(shopperId);
         TokenId tId = new TokenId(tokenId);
+        try {
+            TokenService tokenService = new TokenService(tokenRepository);
+            Token token = tokenService.load(sId, tId);
 
-        TokenService tokenService = new TokenService(tokenRepository);
-        Token token = tokenService.load(sId, tId);
-
-        PaymentService paymentService = new PaymentService(paymentRepository);
-        Payment payment = paymentService.load(sId, tId);
-        return Uni.createFrom().completionStage(() -> viewToken.data("token", token).data("payment", payment).data("reload", false).renderAsync());
+            PaymentService paymentService = new PaymentService(paymentRepository);
+            Payment payment = paymentService.load(sId, tId);
+            return Uni.createFrom().completionStage(() -> viewToken.data("token", token).data("payment", payment).data("reload", false).renderAsync());
+        } catch (TokenException e) {
+            e.printStackTrace();
+            return Uni.createFrom().completionStage(() -> error.data("message", "トークンの読み込みに失敗しました").data("detail", e.getMessage()).renderAsync());
+        }
     }
 
     /*
@@ -157,12 +164,12 @@ public class PaymentResource {
     @Produces(MediaType.TEXT_HTML)
     public Uni<String> bill(@FormParam("shopperId") final int userId, @FormParam("tokenId") final String tokenId, @FormParam("storeId") @DefaultValue("1") final int storeId, @FormParam("amount") int amount) {
         try {
-            TokenService tokenService = new TokenService(tokenRepository);
+            DelegateService delegateService = new DelegateService(delegateRepository);
             NotifyService paymentService = new NotifyService(notifyRepository);
             CoffeeStoreService coffeeStoreService = new CoffeeStoreService(coffeeStoreRepository);
             CoffeeStore store = coffeeStoreService.load(new StoreId(storeId));
 
-            Payment payment = tokenService.use(new ShopperId(userId), new TokenId(tokenId), store, new Money(amount));
+            Payment payment = delegateService.invoke(new ShopperId(userId), new TokenId(tokenId), store, new Money(amount));
             if (payment == null) {
                 return Uni.createFrom().completionStage(() -> error.data("message", "決済処理に失敗しました").data("detail", "").renderAsync());
             } else {

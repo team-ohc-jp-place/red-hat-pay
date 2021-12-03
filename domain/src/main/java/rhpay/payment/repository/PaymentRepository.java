@@ -6,4 +6,5 @@ import rhpay.payment.domain.TokenId;
 
 public interface PaymentRepository {
     Payment load(ShopperId shopperId, TokenId tokenId);
+    void store(Payment payment);
 }

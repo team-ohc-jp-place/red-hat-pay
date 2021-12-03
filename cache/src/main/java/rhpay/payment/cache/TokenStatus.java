@@ -1,31 +1,43 @@
 package rhpay.payment.cache;
 
 import org.infinispan.protostream.annotations.ProtoEnumValue;
-import org.infinispan.protostream.annotations.ProtoFactory;
 
 public enum TokenStatus {
 
     @ProtoEnumValue(value = 0)
-    UNUSED,
+    UNUSED("未使用"),
     @ProtoEnumValue(value = 1)
-    PROCESSING,
+    PROCESSING("処理中"),
     @ProtoEnumValue(value = 2)
-    USED,
+    USED("使用済み"),
     @ProtoEnumValue(value = 3)
-    FAILED;
+    FAILED("失敗");
 
-    public String getName(){
+    public final String name;
+
+    TokenStatus(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public rhpay.payment.domain.TokenStatus toDomain(){
         switch(this){
-            case UNUSED:
-                return "未使用";
-            case PROCESSING:
-                return "処理中";
-            case USED:
-                return "使用済み";
-            case FAILED:
-                return "エラー";
-            default:
-                return "想定外のステータス";
+            case UNUSED: return rhpay.payment.domain.TokenStatus.UNUSED;
+            case PROCESSING: return rhpay.payment.domain.TokenStatus.PROCESSING;
+            case USED: return rhpay.payment.domain.TokenStatus.USED;
         }
+        return rhpay.payment.domain.TokenStatus.FAILED;
+    }
+
+    public static TokenStatus fromDomain(rhpay.payment.domain.TokenStatus status){
+        switch(status){
+            case UNUSED: return TokenStatus.UNUSED;
+            case PROCESSING: return TokenStatus.PROCESSING;
+            case USED: return TokenStatus.USED;
+        }
+        return TokenStatus.FAILED;
     }
 }

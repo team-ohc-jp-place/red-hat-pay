@@ -1,18 +1,17 @@
 package rhpay.payment.task;
 
 import rhpay.monitoring.TaskEvent;
-import rhpay.payment.repository.BillingRepository;
+import rhpay.payment.repository.*;
 import rhpay.payment.domain.*;
-import rhpay.payment.repository.CacheBillingRepository;
-import rhpay.payment.repository.CacheShopperRepository;
-import rhpay.payment.repository.ShopperRepository;
 import rhpay.payment.service.BillingService;
 import jdk.jfr.Event;
 import org.infinispan.Cache;
 import org.infinispan.tasks.ServerTask;
 import org.infinispan.tasks.TaskContext;
 import rhpay.payment.cache.*;
+import rhpay.payment.service.PaymentService;
 import rhpay.payment.service.ShopperService;
+import rhpay.payment.service.TokenService;
 
 import java.time.ZoneOffset;
 import java.util.Map;
@@ -42,13 +41,17 @@ public class PaymentTask implements ServerTask<PaymentResponse> {
         Cache<TokenKey, PaymentEntity> paymentCache = taskContext.getCacheManager().getCache("payment");
         Cache<ShopperKey, ShopperEntity> shopperCache = taskContext.getCacheManager().getCache("user");
 
-        BillingRepository billingRepository = new CacheBillingRepository(tokenCache, walletCache, paymentCache);
+        BillingRepository billingRepository = new CacheBillingRepository(walletCache);
         BillingService billingService = new BillingService(billingRepository);
         ShopperRepository shopperRepository = new CacheShopperRepository(shopperCache);
         ShopperService shopperService = new ShopperService(shopperRepository);
+        TokenRepository tokenRepository = new CacheTokenRepository(tokenCache);
+        TokenService tokenService = new TokenService(tokenRepository);
+        PaymentRepository paymentRepository = new CachePaymentRepository(paymentCache);
+        PaymentService paymentService = new PaymentService(paymentRepository);
 
-        // このクラスはスレッドセーフでは無いため、パラメータをスレッドローカルへ保持する
-        PaymentTaskParameter parameter = new PaymentTaskParameter(shopperId, tokenId, amount, store, billingService, shopperService);
+                // このクラスはスレッドセーフでは無いため、パラメータをスレッドローカルへ保持する
+        PaymentTaskParameter parameter = new PaymentTaskParameter(shopperId, tokenId, amount, store, billingService, shopperService, tokenService, paymentService);
         parameterThreadLocal.set(parameter);
     }
 
@@ -61,26 +64,49 @@ public class PaymentTask implements ServerTask<PaymentResponse> {
         // JFRのイベントを開始する
         Event taskEvent = new TaskEvent("PaymentTask", parameter.shopperId.value, parameter.tokenId.value);
         taskEvent.begin();
+        Token token = null;
+
+        // ドメインのオブジェクトを取得
+        final ShopperId shopperId = parameter.shopperId;
+        final TokenId tokenId = parameter.tokenId;
+        final Money amount = parameter.amount;
+        final CoffeeStore store = parameter.store;
+        final Billing bill = store.createBill(amount);
+        final BillingService billingService = parameter.billingService;
+        final TokenService tokenService = parameter.tokenService;
+        final PaymentService paymentService = parameter.paymentService;
 
         try {
-            // ドメインのオブジェクトを取得
-            final ShopperId shopperId = parameter.shopperId;
-            final TokenId tokenId = parameter.tokenId;
-            final Money amount = parameter.amount;
-            final CoffeeStore store = parameter.store;
-            final Billing bill = store.createBill(amount);
 
+            // 買い物客の情報を読み込む
             Shopper shopper = parameter.shopperService.load(shopperId);
 
+            // トークンを読み込んで処理中にする
+            token = tokenService.load(shopperId, tokenId);
+            token = tokenService.processing(token);
+
             // 請求処理
-            BillingService billingService = parameter.billingService;
             final Payment payment = billingService.bill(shopper, tokenId, bill);
 
-            // レスポンスを返す
+            // トークンを使用済みにする
+            token = tokenService.used(token);
+
+            // 支払い結果を格納する
+            paymentService.store(payment);
+
+            // アプリケーションへレスポンスを返す
             return new PaymentResponse(payment.getStoreId().value, payment.getShopperId().value, payment.getTokenId().value, payment.getBillingAmount().value, payment.getBillingDateTime().toEpochSecond(ZoneOffset.of("+09:00")));
+
         } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
+            PaymentException thrw = new PaymentException("Fail to pay");
+            if(token == null){
+                thrw = new PaymentException(String.format("This token is not exist : [%s, %s]", shopperId, tokenId));
+            } else {
+                tokenService.failed(token);
+            }
+            thrw.addSuppressed(e);
+            thrw.printStackTrace();
+            throw thrw;
         } finally {
             taskEvent.commit();
             parameterThreadLocal.remove();
@@ -105,13 +131,17 @@ class PaymentTaskParameter {
     public final CoffeeStore store;
     public final BillingService billingService;
     public final ShopperService shopperService;
+    public final TokenService tokenService;
+    public final PaymentService paymentService;
 
-    public PaymentTaskParameter(ShopperId shopperId, TokenId tokenId, Money amount, CoffeeStore store, BillingService billingService, ShopperService shopperService) {
+    public PaymentTaskParameter(ShopperId shopperId, TokenId tokenId, Money amount, CoffeeStore store, BillingService billingService, ShopperService shopperService, TokenService tokenService, PaymentService paymentService) {
         this.shopperId = shopperId;
         this.tokenId = tokenId;
         this.amount = amount;
         this.store = store;
         this.billingService = billingService;
         this.shopperService = shopperService;
+        this.tokenService = tokenService;
+        this.paymentService = paymentService;
     }
 }
