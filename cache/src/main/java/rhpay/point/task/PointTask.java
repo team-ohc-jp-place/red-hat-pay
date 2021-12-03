@@ -1,11 +1,13 @@
 package rhpay.point.task;
 
 import rhpay.payment.domain.*;
+import rhpay.point.PointAddService;
 import rhpay.point.cache.PointEntity;
 import rhpay.payment.cache.ShopperKey;
 import rhpay.monitoring.TaskEvent;
 import rhpay.point.domain.Point;
 import rhpay.point.repository.CachePointRepository;
+import rhpay.point.repository.PoindAddRepository;
 import rhpay.point.repository.PointRepository;
 import rhpay.point.service.PointService;
 import jdk.jfr.Event;
@@ -27,8 +29,8 @@ public class PointTask implements ServerTask<PointEntity> {
     @Override
     public void setTaskContext(TaskContext taskContext) {
 
-        PointRepository pointRepository = new CachePointRepository((Cache<ShopperKey, PointEntity>) taskContext.getCache().get());
-        PointService pointService = new PointService(pointRepository);
+        PoindAddRepository pointRepository = new CachePointRepository((Cache<ShopperKey, PointEntity>) taskContext.getCache().get());
+        PointAddService pointService = new PointAddService(pointRepository);
 
         Map<String, ?> param = taskContext.getParameters().get();
 
@@ -55,8 +57,8 @@ public class PointTask implements ServerTask<PointEntity> {
             Payment payment = parameter.payment;
 
             // ポイントを加算する
-            PointService pointService = parameter.pointService;
-            final Point newPoint = pointService.givePoint(payment);
+            PointAddService pointService = parameter.pointService;
+            final Point newPoint = pointService.addPoint(payment.getShopperId(), payment.getBillingAmount());
 
             // レスポンスを返す
             return new PointEntity(newPoint.getPoint());
@@ -79,9 +81,9 @@ public class PointTask implements ServerTask<PointEntity> {
 class PointTaskParameter {
 
     public final Payment payment;
-    public final PointService pointService;
+    public final PointAddService pointService;
 
-    public PointTaskParameter(Payment payment, PointService pointService) {
+    public PointTaskParameter(Payment payment, PointAddService pointService) {
         this.payment = payment;
         this.pointService = pointService;
     }

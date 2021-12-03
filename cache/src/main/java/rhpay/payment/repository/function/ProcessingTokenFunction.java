@@ -25,7 +25,7 @@ public class ProcessingTokenFunction implements BiFunction<TokenKey, TokenEntity
         functionEvent.begin();
         try {
             if (cachedEntity == null) {
-                throw new RuntimeException(String.format("his token is not exist : %s", tokenKey.toString()));
+                throw new RuntimeException(String.format("This token is not exist : %s", tokenKey.toString()));
             }
             if (!cachedEntity.getStatus().equals(TokenStatus.UNUSED)) {
                 throw new RuntimeException(String.format("Attempted to change status of cached tokens to 'processing' even though it is '%s' : %s", cachedEntity.getStatus().getName(), tokenKey.toString()));

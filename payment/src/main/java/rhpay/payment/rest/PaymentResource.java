@@ -76,7 +76,7 @@ public class PaymentResource {
         WalletService walletService = new WalletService(walletRepository);
 
         Shopper shopper = shopperService.load(new ShopperId(userId));
-        Wallet wallet = walletService.load(shopper.getId());
+        Wallet wallet = walletService.load(shopper);
         return Uni.createFrom().item(String.format("%s さんの残高は %d 円です。オートチャージは %d 円に設定されています", shopper.getUserName().value, wallet.getChargedMoney().value, wallet.getAutoChargeMoney().value));
     }
 

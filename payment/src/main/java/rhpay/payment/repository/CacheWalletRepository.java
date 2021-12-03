@@ -19,12 +19,15 @@ public class CacheWalletRepository implements WalletRepository {
     @Remote("wallet")
     RemoteCache<ShopperKey, WalletEntity> walletCache;
 
-    public Wallet load(ShopperId ownerId) {
-        WalletEntity walletEntity = walletCache.get(new ShopperKey(ownerId.value));
-        //TODO: リポジトリから取得
-        Shopper owner = new Shopper(ownerId, new FullName(""));
+    public Wallet load(Shopper owner) {
+        WalletEntity walletEntity = walletCache.get(new ShopperKey(owner.getId().value));
         Wallet wallet = new Wallet(owner, new Money(walletEntity.getChargedMoney()), new Money(walletEntity.getAutoChargeMoney()));
 
         return wallet;
     }
+
+    public void store(Wallet wallet){
+        throw new UnsupportedOperationException("");
+    }
+
 }

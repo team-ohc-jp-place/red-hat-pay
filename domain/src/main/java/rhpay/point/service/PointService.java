@@ -1,6 +1,7 @@
 package rhpay.point.service;
 
 import rhpay.payment.domain.Payment;
+import rhpay.payment.domain.ShopperId;
 import rhpay.point.domain.Point;
 import rhpay.point.repository.PointRepository;
 
@@ -12,8 +13,12 @@ public class PointService {
         this.pointRepository = pointRepository;
     }
 
-    public Point givePoint(Payment payment) {
-        return pointRepository.givePoint(payment);
+    public Point load(ShopperId shopperId){
+        return pointRepository.load(shopperId);
+    }
+
+    public void store(Point point){
+        pointRepository.store(point);
     }
 
 }

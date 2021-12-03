@@ -1,9 +1,12 @@
 package rhpay.point.repository;
 
 import rhpay.payment.domain.Payment;
+import rhpay.payment.domain.ShopperId;
 import rhpay.point.domain.Point;
 
 public interface PointRepository {
 
-    Point givePoint(Payment payment);
+    Point load(ShopperId shopperId);
+
+    void store(Point point);
 }

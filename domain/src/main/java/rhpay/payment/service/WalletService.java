@@ -1,5 +1,6 @@
 package rhpay.payment.service;
 
+import rhpay.payment.domain.Shopper;
 import rhpay.payment.repository.WalletRepository;
 import rhpay.payment.domain.ShopperId;
 import rhpay.payment.domain.Wallet;
@@ -12,7 +13,7 @@ public class WalletService {
         this.walletRepository = walletRepository;
     }
 
-    public Wallet load(ShopperId shopper) {
+    public Wallet load(Shopper shopper) {
         return walletRepository.load(shopper);
     }
 
