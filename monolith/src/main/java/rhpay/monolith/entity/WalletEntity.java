@@ -1,16 +1,43 @@
 package rhpay.monolith.entity;
 
-import org.springframework.data.annotation.Id;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import java.io.Serializable;
 
-public class WalletEntity {
+@Entity
+@Table(name = "Wallet")
+public class WalletEntity implements Serializable {
+
     @Id
-    private final int ownerId;
-    private final int chargedMoney;
-    private final int autoChargeMoney;
+    @Column
+    private int ownerId;
+
+    @Column
+    private int chargedMoney;
+
+    @Column
+    private int autoChargeMoney;
+
+    public WalletEntity() {
+    }
 
     public WalletEntity(int ownerId, int chargedMoney, int autoChargeMoney) {
         this.ownerId = ownerId;
         this.chargedMoney = chargedMoney;
+        this.autoChargeMoney = autoChargeMoney;
+    }
+
+    public void setOwnerId(int ownerId) {
+        this.ownerId = ownerId;
+    }
+
+    public void setChargedMoney(int chargedMoney) {
+        this.chargedMoney = chargedMoney;
+    }
+
+    public void setAutoChargeMoney(int autoChargeMoney) {
         this.autoChargeMoney = autoChargeMoney;
     }
 

@@ -3,7 +3,7 @@ package rhpay.monolith.repository;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 import rhpay.monolith.entity.WalletEntity;
-import rhpay.monolith.repository.spring.WalletSpringRepository;
+import rhpay.monolith.repository.spring.WalletEntityRepository;
 import rhpay.payment.domain.Money;
 import rhpay.payment.domain.Shopper;
 import rhpay.payment.domain.Wallet;
@@ -13,15 +13,15 @@ import rhpay.payment.repository.WalletRepository;
 @RequestScope
 public class RdbmsWalletRepository implements WalletRepository {
 
-    WalletSpringRepository walletSpringRepository;
+    WalletEntityRepository walletSpringRepository;
 
-    public RdbmsWalletRepository(WalletSpringRepository walletSpringRepository) {
+    public RdbmsWalletRepository(WalletEntityRepository walletSpringRepository) {
         this.walletSpringRepository = walletSpringRepository;
     }
 
     @Override
     public Wallet load(Shopper owner) {
-        WalletEntity entity = walletSpringRepository.findById(owner.getId().value).get();
+        WalletEntity entity = walletSpringRepository.findByIdWithLock(owner.getId().value);
         return new Wallet(owner, new Money(entity.getChargedMoney()), new Money(entity.getAutoChargeMoney()));
     }
 

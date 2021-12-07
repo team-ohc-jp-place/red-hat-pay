@@ -3,7 +3,7 @@ package rhpay.monolith.repository;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 import rhpay.monolith.entity.ShopperEntity;
-import rhpay.monolith.repository.spring.ShopperSpringRepository;
+import rhpay.monolith.repository.spring.ShopperEntityRepository;
 import rhpay.payment.domain.FullName;
 import rhpay.payment.domain.Shopper;
 import rhpay.payment.domain.ShopperId;
@@ -13,9 +13,9 @@ import rhpay.payment.repository.ShopperRepository;
 @RequestScope
 public class RdbmsShopperRepository implements ShopperRepository {
 
-    private ShopperSpringRepository shopperSpringRepository;
+    private ShopperEntityRepository shopperSpringRepository;
 
-    public RdbmsShopperRepository(ShopperSpringRepository shopperSpringRepository) {
+    public RdbmsShopperRepository(ShopperEntityRepository shopperSpringRepository) {
         this.shopperSpringRepository = shopperSpringRepository;
     }
 

@@ -1,37 +1,25 @@
-package rhpay.monolith.entity;
+package rhpay.monolith.rest;
 
-import javax.persistence.*;
-import java.io.Serializable;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "Payment")
-public class PaymentEntity implements Serializable {
-    @EmbeddedId
-    private TokenKey id;
+public class PaymentResponse {
 
     private int storeId;
+    private int shopperId;
 
+    private String tokenId;
     private int billingAmount;
-
     private LocalDateTime billingDateTime;
 
-    public PaymentEntity() {
+    public PaymentResponse() {
     }
 
-    public PaymentEntity(TokenKey id, int storeId, int billingAmount, LocalDateTime billingDateTime) {
-        this.id = id;
+    public PaymentResponse(int storeId, int shopperId, String tokenId, int billingAmount, LocalDateTime billingDateTime) {
         this.storeId = storeId;
+        this.shopperId = shopperId;
+        this.tokenId = tokenId;
         this.billingAmount = billingAmount;
         this.billingDateTime = billingDateTime;
-    }
-
-    public TokenKey getId() {
-        return id;
-    }
-
-    public void setId(TokenKey id) {
-        this.id = id;
     }
 
     public int getStoreId() {
@@ -40,6 +28,22 @@ public class PaymentEntity implements Serializable {
 
     public void setStoreId(int storeId) {
         this.storeId = storeId;
+    }
+
+    public int getShopperId() {
+        return shopperId;
+    }
+
+    public void setShopperId(int shopperId) {
+        this.shopperId = shopperId;
+    }
+
+    public String getTokenId() {
+        return tokenId;
+    }
+
+    public void setTokenId(String tokenId) {
+        this.tokenId = tokenId;
     }
 
     public int getBillingAmount() {

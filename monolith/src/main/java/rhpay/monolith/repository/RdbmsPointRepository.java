@@ -3,8 +3,7 @@ package rhpay.monolith.repository;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 import rhpay.monolith.entity.PointEntity;
-import rhpay.monolith.repository.spring.PointSpringRepository;
-import rhpay.payment.domain.Payment;
+import rhpay.monolith.repository.spring.PointEntityRepository;
 import rhpay.payment.domain.ShopperId;
 import rhpay.point.domain.Point;
 import rhpay.point.repository.PointRepository;
@@ -13,9 +12,9 @@ import rhpay.point.repository.PointRepository;
 @RequestScope
 public class RdbmsPointRepository implements PointRepository {
 
-    PointSpringRepository pointSpringRepository;
+    PointEntityRepository pointSpringRepository;
 
-    public RdbmsPointRepository(PointSpringRepository pointSpringRepository) {
+    public RdbmsPointRepository(PointEntityRepository pointSpringRepository) {
         this.pointSpringRepository = pointSpringRepository;
     }
 

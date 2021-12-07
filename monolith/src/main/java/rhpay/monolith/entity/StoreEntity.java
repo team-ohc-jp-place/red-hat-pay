@@ -1,19 +1,37 @@
 package rhpay.monolith.entity;
 
-import org.springframework.data.annotation.Id;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import java.io.Serializable;
 
-public class StoreEntity {
+@Entity
+@Table(name = "Store")
+public class StoreEntity implements Serializable {
+
     @Id
-    private final int Id;
-    private final String name;
+    private int id;
+
+    private String name;
+
+    public StoreEntity() {
+    }
 
     public StoreEntity(int id, String name) {
-        Id = id;
+        this.id = id;
+        this.name = name;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public void setName(String name) {
         this.name = name;
     }
 
     public int getId() {
-        return Id;
+        return id;
     }
 
     public String getName() {

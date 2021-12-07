@@ -3,7 +3,7 @@ package rhpay.monolith.repository;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 import rhpay.monolith.entity.StoreEntity;
-import rhpay.monolith.repository.spring.StoreSpringRepository;
+import rhpay.monolith.repository.spring.StoreEntityRepository;
 import rhpay.payment.domain.CoffeeStore;
 import rhpay.payment.domain.StoreId;
 import rhpay.payment.domain.StoreName;
@@ -13,9 +13,9 @@ import rhpay.payment.repository.CoffeeStoreRepository;
 @RequestScope
 public class RdbmsCoffeeStoreRepository implements CoffeeStoreRepository {
 
-    StoreSpringRepository storeSpringRepository;
+    StoreEntityRepository storeSpringRepository;
 
-    public RdbmsCoffeeStoreRepository(StoreSpringRepository storeSpringRepository) {
+    public RdbmsCoffeeStoreRepository(StoreEntityRepository storeSpringRepository) {
         this.storeSpringRepository = storeSpringRepository;
     }
 
