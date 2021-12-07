@@ -5,7 +5,7 @@ import jdk.jfr.Event;
 import jdk.jfr.Label;
 
 @Label("Consumer")
-@Category("CoffeeStore")
+@Category({"RedHatPay", "Application"})
 public class ConsumerEvent extends Event {
 
     @Label("traceId")

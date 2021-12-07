@@ -5,7 +5,7 @@ import jdk.jfr.Event;
 import jdk.jfr.Label;
 
 @Label("Rest")
-@Category("CoffeeStore")
+@Category({"RedHatPay", "Application"})
 public class RestEvent extends Event {
 
     @Label("class")

@@ -5,6 +5,6 @@ import jdk.jfr.Event;
 import jdk.jfr.Label;
 
 @Label("Point")
-@Category("Domain")
+@Category({"RedHatPay", "Domain"})
 public class PointEvent extends Event {
 }
