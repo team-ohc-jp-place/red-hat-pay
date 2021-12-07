@@ -41,16 +41,17 @@ public class PaymentResource {
     @POST
     @Path("/pay/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Uni<Token> createTokenAPI(@PathParam("userId") final int userId) {
+    public Uni<TokenResponse> createTokenAPI(@PathParam("userId") final int userId) {
         TokenService tokenService = new TokenService(tokenRepository);
         Token token = tokenService.create(new ShopperId(userId));
-        return Uni.createFrom().item(token);
+        TokenResponse res = new TokenResponse(token.getShopperId().value, token.getTokenId().value, token.getStatus());
+        return Uni.createFrom().item(res);
     }
 
     @POST
     @Path("/pay/{userId}/{tokenId}/{storeId}/{amount}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Uni<Payment> pay(@PathParam("userId") final int userId, @PathParam("tokenId") final String tokenId, @PathParam("storeId") final int storeId, @PathParam("amount") int amount) {
+    public Uni<PaymentResponse> pay(@PathParam("userId") final int userId, @PathParam("tokenId") final String tokenId, @PathParam("storeId") final int storeId, @PathParam("amount") int amount) {
         DelegateService delegateService = new DelegateService(delegateRepository);
         NotifyService paymentService = new NotifyService(notifyRepository);
         CoffeeStoreService coffeeStoreService = new CoffeeStoreService(coffeeStoreRepository);
@@ -61,7 +62,8 @@ public class PaymentResource {
         try {
             Payment payment = delegateService.invoke(new ShopperId(userId), new TokenId(tokenId), store, new Money(amount));
             paymentService.notify(payment);
-            return Uni.createFrom().item(payment);
+            PaymentResponse res = new PaymentResponse(payment.getStoreId().value, payment.getShopperId().value, payment.getTokenId().value, payment.getBillingAmount().value, payment.getBillingDateTime());
+            return Uni.createFrom().item(res);
         } catch (Exception e) {
             e.printStackTrace();
             throw e;

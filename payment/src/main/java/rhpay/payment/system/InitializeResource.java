@@ -12,7 +12,7 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
-@Path("/cache")
+@Path("/")
 @Traced
 @MonitorRest
 public class InitializeResource {

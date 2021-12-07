@@ -17,4 +17,7 @@ public class WalletService {
         return walletRepository.load(shopper);
     }
 
+    public void store(Wallet wallet) {
+        walletRepository.store(wallet);
+    }
 }

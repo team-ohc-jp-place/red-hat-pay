@@ -20,7 +20,9 @@ public class JfrInterceptor {
     @AroundInvoke
     Object jfrInvocation(InvocationContext context) throws Exception {
 
-        Event event = (tracer == null) ? new RestEvent("", context.getMethod().getName()) : new RestEvent(tracer.activeSpan().context().toTraceId(), context.getMethod().getName());
+        String traceId = (tracer == null) ? "" : tracer.activeSpan().context().toTraceId();
+        
+        Event event =  new RestEvent(traceId, context.getTarget().toString(), context.getMethod().getName());
         event.begin();
         try {
             Object ret = context.proceed();

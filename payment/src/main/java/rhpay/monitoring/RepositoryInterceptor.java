@@ -19,8 +19,9 @@ public class RepositoryInterceptor {
 
     @AroundInvoke
     Object repositoryInvocation(InvocationContext context) throws Exception {
+        String traceId = (tracer == null) ? "" : tracer.activeSpan().context().toTraceId();
+        Event event =  new RepositoryEvent(traceId, context.getTarget().toString(), context.getMethod().getName());
 
-        Event event = (tracer == null) ? new RepositoryEvent("", context.getMethod().getName()) : new RepositoryEvent(tracer.activeSpan().context().toTraceId(), context.getMethod().getName());
         event.begin();
         try {
             Object ret = context.proceed();
