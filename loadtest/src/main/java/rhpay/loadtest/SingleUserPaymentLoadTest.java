@@ -89,7 +89,7 @@ public class SingleUserPaymentLoadTest {
         final Counter counter = new Counter();
         PaymentLoader[] loaders = new PaymentLoader[rushThreadNum];
         for (int i = 0; i < rushThreadNum; i++) {
-            loaders[i] = new PaymentLoader(tokenLists[i], manager.getCache(TOKEN_CACHE_NAME), counter);
+            loaders[i] = new PaymentLoader(tokenLists[i], manager.getCache(WALLET_CACHE_NAME), counter);
         }
 
         // 負荷をかける
@@ -148,7 +148,7 @@ public class SingleUserPaymentLoadTest {
     private static final String password = "password";
 
     private static final String CACHE_CONFIG =
-            "<distributed-cache name=\"%s\" mode=\"SYNC\" remote-timeout=\"17500\">"
+            "<distributed-cache name=\"%s\">"
                     + " <encoding media-type=\"application/x-protostream\"/>"
                     + " <groups enabled=\"true\"/>"
 //                    + "<locking/>"
@@ -193,13 +193,13 @@ class PaymentLoader implements Runnable {
 
     private final Counter counter;
     private final List<Token> tokenList;
-    private final RemoteCache<TokenKey, TokenEntity> tokenCache;
+    private final RemoteCache<ShopperKey, WalletEntity> walletCache;
     public final List<Token> completedTokenList;
     public volatile Token currentToken;
 
-    public PaymentLoader(List<Token> tokenList, RemoteCache<TokenKey, TokenEntity> tokenCache, Counter counter) {
+    public PaymentLoader(List<Token> tokenList, RemoteCache<ShopperKey, WalletEntity> walletCache, Counter counter) {
         this.tokenList = tokenList;
-        this.tokenCache = tokenCache;
+        this.walletCache = walletCache;
         completedTokenList = new ArrayList<>(tokenList.size());
         this.counter = counter;
     }
@@ -220,7 +220,7 @@ class PaymentLoader implements Runnable {
                 payInfo.put("tokenId", t.getTokenId().value);
                 payInfo.put("shopperId", t.getShopperId().value);
 
-                tokenCache.execute("PaymentTask", payInfo, new TokenKey(t.getShopperId().value, t.getTokenId().value));
+                walletCache.execute("PaymentTask", payInfo, new ShopperKey(t.getShopperId().value));
                 completedTokenList.add(t);
             }
             // 全部終わったら処理中のトークンをnullにする

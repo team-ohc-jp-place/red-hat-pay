@@ -1,10 +1,10 @@
 package rhpay.payment.repository;
 
 import io.quarkus.infinispan.client.Remote;
+import org.infinispan.Cache;
+import org.infinispan.CacheStream;
 import org.infinispan.client.hotrod.RemoteCache;
-import rhpay.payment.cache.PaymentResponse;
-import rhpay.payment.cache.TokenEntity;
-import rhpay.payment.cache.TokenKey;
+import rhpay.payment.cache.*;
 import rhpay.payment.domain.*;
 
 import javax.enterprise.context.RequestScoped;
@@ -13,13 +13,14 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 @RequestScoped
-public class CacheDelegateRepository implements DelegateRepository{
+public class CacheDelegateRepository implements DelegateRepository {
 
     @Inject
-    @Remote("token")
-    RemoteCache<TokenKey, TokenEntity> tokenCache;
+    @Remote("wallet")
+    RemoteCache<ShopperKey, WalletEntity> walletCache;
 
     @Override
     public Payment invoke(ShopperId shopperId, TokenId tokenId, CoffeeStore store, Money amount) {
@@ -31,7 +32,7 @@ public class CacheDelegateRepository implements DelegateRepository{
         payInfo.put("storeId", store.getId().value);
         payInfo.put("storeName", store.getName().value);
 
-        PaymentResponse paymentEntity = tokenCache.execute("PaymentTask", payInfo, new TokenKey(shopperId.value, tokenId.value));
+        PaymentResponse paymentEntity = walletCache.execute("PaymentTask", payInfo, new ShopperKey(shopperId.value));
 
         Payment payment = new Payment(store.getId(), shopperId, tokenId, new Money(paymentEntity.getPillingAmount()), LocalDateTime.ofEpochSecond(paymentEntity.getBillingDateTime(), 0, ZoneOffset.of("+09:00")));
 

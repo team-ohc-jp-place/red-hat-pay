@@ -1,8 +1,12 @@
 package rhpay.payment.repository;
 
+import jdk.jfr.Event;
 import org.infinispan.lock.EmbeddedClusteredLockManagerFactory;
 import org.infinispan.lock.api.ClusteredLock;
 import org.infinispan.lock.api.ClusteredLockManager;
+import rhpay.monitoring.CacheUseEvent;
+import rhpay.monitoring.LockEvent;
+import rhpay.monitoring.SegmentService;
 import rhpay.payment.cache.*;
 import org.infinispan.Cache;
 import rhpay.payment.domain.*;
@@ -39,18 +43,26 @@ public class CacheBillingRepository implements BillingRepository {
             // 財布からお金を支払う
             clusteredLock.tryLock(LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS).whenComplete((ret, exception) -> {
                 if (ret) {
+                    Event event = new LockEvent(shopperKey.getOwnerId());
+                    event.begin();
                     // ロックが取れたら整合性を必要とする処理をする
                     try {
+                        Event loadEvent = new CacheUseEvent(SegmentService.getSegment(walletCache, shopperKey), "loadWallet");
+                        loadEvent.begin();
                         WalletEntity cachedWallet = walletCache.get(shopperKey);
+                        loadEvent.commit();
                         Wallet wallet = new Wallet(shopper, new Money(cachedWallet.getChargedMoney()), new Money(cachedWallet.getAutoChargeMoney()));
 
                         Payment payment = wallet.pay(bill, tokenId);
                         this.setPayment(payment);
 
+                        Event storeEvent = new CacheUseEvent(SegmentService.getSegment(walletCache, shopperKey), "storeWallet");
+                        storeEvent.begin();
                         walletCache.put(shopperKey, new WalletEntity(wallet.getChargedMoney().value, wallet.getAutoChargeMoney().value));
-
+                        storeEvent.commit();
                     } finally {
                         // ロック期間の最後でアンロックする
+                        event.commit();
                         clusteredLock.unlock();
                     }
                 } else {
