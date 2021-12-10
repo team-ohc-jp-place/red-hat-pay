@@ -8,28 +8,31 @@ import rhpay.monitoring.TaskEvent;
 import rhpay.point.domain.Point;
 import rhpay.point.repository.CachePointRepository;
 import rhpay.point.repository.PoindAddRepository;
-import rhpay.point.repository.PointRepository;
-import rhpay.point.service.PointService;
 import jdk.jfr.Event;
 import org.infinispan.Cache;
 import org.infinispan.tasks.ServerTask;
 import org.infinispan.tasks.TaskContext;
 
+import javax.transaction.TransactionManager;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
 
+// TODO: Distributed Streamに対応させる
+
 /**
- *
+ * Distributed Streamはまだ非対応
  */
 public class PointTask implements ServerTask<PointEntity> {
+
 
     private final ThreadLocal<PointTaskParameter> parameterThreadLocal = new ThreadLocal<>();
 
     @Override
     public void setTaskContext(TaskContext taskContext) {
 
-        PoindAddRepository pointRepository = new CachePointRepository((Cache<ShopperKey, PointEntity>) taskContext.getCache().get());
+        Cache<ShopperKey, PointEntity> pointCache = (Cache<ShopperKey, PointEntity>) taskContext.getCache().get();
+        PoindAddRepository pointRepository = new CachePointRepository(pointCache);
         PointAddService pointService = new PointAddService(pointRepository);
 
         Map<String, ?> param = taskContext.getParameters().get();
@@ -41,7 +44,7 @@ public class PointTask implements ServerTask<PointEntity> {
         final LocalDateTime dateTime = LocalDateTime.ofEpochSecond((Long) param.get("epoch"), 0, ZoneOffset.of("+09:00"));
         Payment payment = new Payment(storeId, shopperId, tokenId, billAmount, dateTime);
 
-        PointTaskParameter parameter = new PointTaskParameter(payment, pointService);
+        PointTaskParameter parameter = new PointTaskParameter(payment, pointService, pointCache);
         parameterThreadLocal.set(parameter);
     }
 
@@ -50,20 +53,28 @@ public class PointTask implements ServerTask<PointEntity> {
 
         PointTaskParameter parameter = parameterThreadLocal.get();
 
+        // ドメインのオブジェクトを作成
+        Payment payment = parameter.payment;
+
+        // ポイントを加算する
+        PointAddService pointService = parameter.pointService;
+
+        TransactionManager transactionManager = parameter.pointCache.getAdvancedCache().getTransactionManager();
+
         Event taskEvent = new TaskEvent("PointTask", parameter.payment.getShopperId().value, parameter.payment.getTokenId().value);
         taskEvent.begin();
         try {
-            // ドメインのオブジェクトを作成
-            Payment payment = parameter.payment;
+            // トランザクションを開始する
+            transactionManager.begin();
 
-            // ポイントを加算する
-            PointAddService pointService = parameter.pointService;
             final Point newPoint = pointService.addPoint(payment.getShopperId(), payment.getBillingAmount());
 
+            transactionManager.commit();
             // レスポンスを返す
             return new PointEntity(newPoint.getPoint());
         } catch (Exception e) {
             e.printStackTrace();
+            transactionManager.rollback();
             throw e;
         } finally {
             taskEvent.commit();
@@ -82,9 +93,11 @@ class PointTaskParameter {
 
     public final Payment payment;
     public final PointAddService pointService;
+    public final Cache<ShopperKey, PointEntity> pointCache;
 
-    public PointTaskParameter(Payment payment, PointAddService pointService) {
+    public PointTaskParameter(Payment payment, PointAddService pointService, Cache<ShopperKey, PointEntity> pointCache) {
         this.payment = payment;
         this.pointService = pointService;
+        this.pointCache = pointCache;
     }
 }

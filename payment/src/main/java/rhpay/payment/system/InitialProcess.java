@@ -28,19 +28,27 @@ public class InitialProcess {
                     + " <groups enabled=\"true\"/>"
                     + "</distributed-cache>";
 
+    private static final String TRANSACTIONAL_CACHE_CONFIG =
+            "<distributed-cache name=\"%s\">"
+                    + " <encoding media-type=\"application/x-protostream\"/>"
+                    + " <groups enabled=\"true\"/>"
+                    + "<locking concurrency-level=\"1000\" acquire-timeout=\"15000\" striping=\"false\"/>"
+                    + "<transaction mode=\"BATCH\" locking=\"PESSIMISTIC\"/>"
+                    + "</distributed-cache>";
+
     void onStart(@Observes StartupEvent ev) {
         Set<String> cacheNames = cacheManager.getCacheNames();
         if (!cacheNames.contains("user")) {
             cacheManager.administration().getOrCreateCache("user", new XMLStringConfiguration(String.format(CACHE_CONFIG, "user")));
         }
         if (!cacheNames.contains("wallet")) {
-            cacheManager.administration().getOrCreateCache("wallet", new XMLStringConfiguration(String.format(CACHE_CONFIG, "wallet")));
+            cacheManager.administration().getOrCreateCache("wallet", new XMLStringConfiguration(String.format(TRANSACTIONAL_CACHE_CONFIG, "wallet")));
         }
         if (!cacheNames.contains("token")) {
-            cacheManager.administration().getOrCreateCache("token", new XMLStringConfiguration(String.format(CACHE_CONFIG, "token")));
+            cacheManager.administration().getOrCreateCache("token", new XMLStringConfiguration(String.format(TRANSACTIONAL_CACHE_CONFIG, "token")));
         }
         if (!cacheNames.contains("payment")) {
-            cacheManager.administration().getOrCreateCache("payment", new XMLStringConfiguration(String.format(CACHE_CONFIG, "payment")));
+            cacheManager.administration().getOrCreateCache("payment", new XMLStringConfiguration(String.format(TRANSACTIONAL_CACHE_CONFIG, "payment")));
         }
     }
 }

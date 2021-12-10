@@ -2,6 +2,7 @@ package rhpay.payment.task;
 
 import jdk.jfr.Event;
 import org.infinispan.Cache;
+import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataImmortalCacheEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -19,7 +20,10 @@ import rhpay.payment.service.PaymentService;
 import rhpay.payment.service.ShopperService;
 import rhpay.payment.service.TokenService;
 
-public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey, WalletEntity>, MetadataImmortalCacheEntry> {
+import javax.transaction.SystemException;
+import javax.transaction.TransactionManager;
+
+public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey, WalletEntity>, ImmortalCacheEntry> {
 
     @ProtoField(number = 1, defaultValue = "0")
     final int shopperId;
@@ -46,11 +50,13 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
     }
 
     @Override
-    public void accept(Cache<ShopperKey, WalletEntity> walletCache, MetadataImmortalCacheEntry entry) {
+    public void accept(Cache<ShopperKey, WalletEntity> walletCache, ImmortalCacheEntry entry) {
         EmbeddedCacheManager cacheManager = walletCache.getCacheManager();
         Cache<TokenKey, TokenEntity> tokenCache = cacheManager.getCache("token");
         Cache<TokenKey, PaymentEntity> paymentCache = cacheManager.getCache("payment");
         Cache<ShopperKey, ShopperEntity> shopperCache = cacheManager.getCache("user");
+
+        TransactionManager transactionManager = walletCache.getAdvancedCache().getTransactionManager();
 
         BillingService billingService = new BillingService(new CacheBillingRepository(walletCache));
         ShopperService shopperService = new ShopperService(new CacheShopperRepository(shopperCache));
@@ -72,6 +78,8 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
         final Billing bill = store.createBill(amount);
 
         try {
+            // トランザクションを開始する
+            transactionManager.begin();
 
             // 買い物客の情報を読み込む
             Shopper shopper = shopperService.load(shopperId);
@@ -89,8 +97,15 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
             // 支払い結果を格納する
             paymentService.store(payment);
 
+            transactionManager.commit();
+
         } catch (Exception e) {
             RuntimeException thrw = new RuntimeException("Fail to pay");
+            try {
+                transactionManager.rollback();
+            } catch (SystemException ex) {
+                thrw.addSuppressed(ex);
+            }
             if (token == null) {
                 thrw = new RuntimeException(String.format("This token is not exist : [%s, %s]", shopperId, tokenId));
             } else {

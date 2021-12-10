@@ -38,11 +38,11 @@ public class SingleUserPaymentLoadTest {
         RemoteCacheManager manager = new RemoteCacheManager(configuration);
 
         RemoteCache<TokenKey, TokenEntity> tokenCache = manager.administration().getOrCreateCache(TOKEN_CACHE_NAME,
-                new XMLStringConfiguration(String.format(CACHE_CONFIG, TOKEN_CACHE_NAME)));
+                new XMLStringConfiguration(String.format(TRANSACTIONAL_CACHE_CONFIG, TOKEN_CACHE_NAME)));
         RemoteCache<ShopperKey, WalletEntity> walletCache = manager.administration().getOrCreateCache(WALLET_CACHE_NAME,
-                new XMLStringConfiguration(String.format(CACHE_CONFIG, WALLET_CACHE_NAME)));
+                new XMLStringConfiguration(String.format(TRANSACTIONAL_CACHE_CONFIG, WALLET_CACHE_NAME)));
         RemoteCache<ShopperKey, WalletEntity> paymentCache = manager.administration().getOrCreateCache(PAYMENT_CACHE_NAME,
-                new XMLStringConfiguration(String.format(CACHE_CONFIG, PAYMENT_CACHE_NAME)));
+                new XMLStringConfiguration(String.format(TRANSACTIONAL_CACHE_CONFIG, PAYMENT_CACHE_NAME)));
         RemoteCache<ShopperKey, ShopperEntity> shopperCache = manager.administration().getOrCreateCache("user",
                 new XMLStringConfiguration(String.format(CACHE_CONFIG, "user")));
         walletCache.clear();
@@ -155,6 +155,14 @@ public class SingleUserPaymentLoadTest {
 //                    + "<locking concurrency-level=\"32\" acquire-timeout=\"1000000\" striping=\"false\"/>"
 //                    + "<state-transfer timeout=\"1000000\"/>"
 //                    + "<transaction auto-commit=\"false\" mode=\"BATCH\" notifications=\"false\" transaction-manager-lookup=\"org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup\"/>"
+                    + "</distributed-cache>";
+
+    private static final String TRANSACTIONAL_CACHE_CONFIG =
+            "<distributed-cache name=\"%s\">"
+                    + " <encoding media-type=\"application/x-protostream\"/>"
+                    + " <groups enabled=\"true\"/>"
+                    + "<locking concurrency-level=\"1000\" acquire-timeout=\"15000\" striping=\"false\"/>"
+                    + "<transaction mode=\"BATCH\" locking=\"PESSIMISTIC\"/>"
                     + "</distributed-cache>";
 
     private static Configuration createConfiguration() throws Exception {
