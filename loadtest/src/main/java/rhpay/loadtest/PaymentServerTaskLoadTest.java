@@ -1,36 +1,39 @@
 package rhpay.loadtest;
 
-import org.infinispan.lock.EmbeddedClusteredLockManagerFactory;
-import org.infinispan.lock.api.ClusteredLock;
-import org.infinispan.lock.api.ClusteredLockManager;
-import rhpay.payment.cache.*;
-import rhpay.payment.domain.ShopperId;
-import rhpay.payment.domain.Token;
-import rhpay.payment.domain.TokenId;
-import rhpay.payment.domain.TokenStatus;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.configuration.XMLStringConfiguration;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
+import rhpay.payment.cache.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SingleUserPaymentLoadTest {
 
-    public static final int rushThreadNum = 10;
-    public static final int tokenNum = 10_000;
-
     private static final String TOKEN_CACHE_NAME = "token";
     private static final String WALLET_CACHE_NAME = "wallet";
     private static final String PAYMENT_CACHE_NAME = "payment";
-
-    public static final List<Token>[] tokenLists = new List[rushThreadNum];
+    private static final String SHOPPER_CACHE_NAME = "user";
 
     public static void main(String... args) throws Exception {
+
+        if (args.length == 3) {
+            System.out.println("");
+            System.exit(1);
+        }
+
+        final int userNum = Integer.parseInt(args[0]);
+        final int paymentNumPerUser = Integer.parseInt(args[1]);
+        final int parallelNum = Integer.parseInt(args[2]);
+        final int totalPaymentNum = userNum * paymentNumPerUser;
+
         System.out.println("+++++++++++++++++++++++++++++++++++++++++++++");
 
         Configuration configuration = createConfiguration();
@@ -38,57 +41,62 @@ public class SingleUserPaymentLoadTest {
         RemoteCacheManager manager = new RemoteCacheManager(configuration);
 
         RemoteCache<TokenKey, TokenEntity> tokenCache = manager.administration().getOrCreateCache(TOKEN_CACHE_NAME,
-                new XMLStringConfiguration(String.format(TRANSACTIONAL_CACHE_CONFIG, TOKEN_CACHE_NAME)));
+                new XMLStringConfiguration(String.format(TX_CACHE_CONFIG, TOKEN_CACHE_NAME)));
         RemoteCache<ShopperKey, WalletEntity> walletCache = manager.administration().getOrCreateCache(WALLET_CACHE_NAME,
-                new XMLStringConfiguration(String.format(TRANSACTIONAL_CACHE_CONFIG, WALLET_CACHE_NAME)));
+                new XMLStringConfiguration(String.format(TX_CACHE_CONFIG, WALLET_CACHE_NAME)));
         RemoteCache<ShopperKey, WalletEntity> paymentCache = manager.administration().getOrCreateCache(PAYMENT_CACHE_NAME,
-                new XMLStringConfiguration(String.format(TRANSACTIONAL_CACHE_CONFIG, PAYMENT_CACHE_NAME)));
-        RemoteCache<ShopperKey, ShopperEntity> shopperCache = manager.administration().getOrCreateCache("user",
-                new XMLStringConfiguration(String.format(CACHE_CONFIG, "user")));
+                new XMLStringConfiguration(String.format(TX_CACHE_CONFIG, PAYMENT_CACHE_NAME)));
+        RemoteCache<ShopperKey, ShopperEntity> shopperCache = manager.administration().getOrCreateCache(SHOPPER_CACHE_NAME,
+                new XMLStringConfiguration(String.format(NON_TX_CACHE_CONFIG, SHOPPER_CACHE_NAME)));
+
+        // データを削除
         walletCache.clear();
         tokenCache.clear();
         paymentCache.clear();
         shopperCache.clear();
 
-        final ShopperId shopperId = new ShopperId(1);
-
-        shopperCache.put(new ShopperKey(shopperId.value), new ShopperEntity("user1"));
-        walletCache.put(new ShopperKey(shopperId.value), new WalletEntity(tokenNum, 0));
-        System.out.println(walletCache.get(new ShopperKey(shopperId.value)));
+        // ユーザに関わるデータを作成
+        for (int i = 0; i < userNum; i++) {
+            ShopperKey key = new ShopperKey(i);
+            shopperCache.put(key, new ShopperEntity("user" + i));
+            walletCache.put(key, new WalletEntity(paymentNumPerUser, 0));
+        }
 
         // 各スレッドに渡すトークンのListを作成
-        List<Token>[] tokenLists = new List[rushThreadNum];
-        for (int i = 0; i < rushThreadNum; i++) {
-            tokenLists[i] = new ArrayList(tokenNum / rushThreadNum);
+        List<TokenKey>[] tokenLists = new List[parallelNum];
+        for (int i = 0; i < parallelNum; i++) {
+            int previousLastPaymentNo = (i * totalPaymentNum) / parallelNum;
+            int currentLastPaymentNo = ((i + 1) * totalPaymentNum) / parallelNum;
+            int allocatedPaymentNum = currentLastPaymentNo - previousLastPaymentNo;
+            tokenLists[i] = new ArrayList(allocatedPaymentNum);
         }
 
         // トークンを作成して、各スレッドへ渡す準備
-        for (int i = 0; i < tokenNum; i++) {
-            //Tokenを作る
-            Token token = new Token(shopperId, new TokenId(String.valueOf(i)), TokenStatus.UNUSED);
-            ;
-            //Tokenをキャッシュする
-            TokenKey key = new TokenKey(token.getShopperId().value, token.getTokenId().value);
-            tokenCache.put(key, new TokenEntity(rhpay.payment.cache.TokenStatus.UNUSED));
-            //Tokenを処理へ渡す
-            tokenLists[i % rushThreadNum].add(token);
+        for (int i = 0; i < userNum; i++) {
+            for (int j = 0; j < paymentNumPerUser; j++) {
+                int tokenId = i * paymentNumPerUser + j;
+                //Tokenをキャッシュする
+                TokenKey key = new TokenKey(userNum, String.valueOf(tokenId));
+                tokenCache.put(key, new TokenEntity(TokenStatus.UNUSED));
+                //Tokenを処理へ渡す
+                tokenLists[tokenId / paymentNumPerUser].add(key);
+            }
         }
 
         System.out.println(String.format("Cached Token number is %d", tokenCache.size()));
-        System.out.println(String.format("Unused cached Token number is %d", tokenCache.entrySet().stream().filter(e -> (e.getValue().getStatus().equals(rhpay.payment.cache.TokenStatus.UNUSED))).count()));
+        System.out.println(String.format("Unused cached Token number is %d", tokenCache.entrySet().stream().filter(e -> (e.getValue().getStatus().equals(TokenStatus.UNUSED))).count()));
 
         // 負荷をかけるスレッドを作成
-        final int rushTaskQueueSize = rushThreadNum;
-        final LinkedBlockingQueue<Runnable> rushTaskQueue = new LinkedBlockingQueue<>(rushTaskQueueSize);
+        final LinkedBlockingQueue<Runnable> rushTaskQueue = new LinkedBlockingQueue<>(parallelNum);
         final RejectedExecutionHandler rushTaskHandler = new ThreadPoolExecutor.DiscardOldestPolicy();
-        final ExecutorService executorService = new ThreadPoolExecutor(rushThreadNum, rushThreadNum,
+        final ExecutorService executorService = new ThreadPoolExecutor(parallelNum, parallelNum,
                 0L, TimeUnit.MILLISECONDS, rushTaskQueue,
                 rushTaskHandler);
 
         // 処理するタスクを作成
-        final Counter counter = new Counter();
-        PaymentLoader[] loaders = new PaymentLoader[rushThreadNum];
-        for (int i = 0; i < rushThreadNum; i++) {
+        final AtomicInteger counter = new AtomicInteger(0);
+        PaymentLoader[] loaders = new PaymentLoader[parallelNum];
+        for (int i = 0; i < parallelNum; i++) {
             loaders[i] = new PaymentLoader(tokenLists[i], manager.getCache(WALLET_CACHE_NAME), counter);
         }
 
@@ -99,7 +107,7 @@ public class SingleUserPaymentLoadTest {
         }
 
         // クライアントからの負荷を全部処理し終わるのを待つ
-        while (counter.get() != rushThreadNum) {
+        while (counter.get() != parallelNum) {
             try {
                 TimeUnit.SECONDS.sleep(1);
             } catch (InterruptedException e) {
@@ -117,17 +125,19 @@ public class SingleUserPaymentLoadTest {
             completedTokenNum += task.completedTokenList.size();
         }
         System.out.println(String.format("終了したトークン数 %d", completedTokenNum));
+        System.out.println(String.format("throughput %f process/ms", ((double) totalPaymentNum / (double) (end - start))));
 
-        System.out.println("After rushing, wallet : " + walletCache.get(new ShopperKey(shopperId.value)));
-        System.out.println(String.format("throughput %f process/ms", (double) ((double) tokenNum / (double) (end - start))));
+        System.out.println("After rushing, wallet : ");
+        for (int i = 0; i < userNum; i++) {
+            System.out.println(walletCache.get(new ShopperKey(i)));
+        }
 
         boolean hasError = false;
         System.out.println("エラーが発生したトークン");
         for (PaymentLoader task : loaders) {
             if (task.currentToken != null) {
                 hasError = true;
-                TokenKey key = new TokenKey(task.currentToken.getShopperId().value, task.currentToken.getTokenId().value);
-                System.out.println(String.format("Token : [%s], [%s]", key, tokenCache.get(key)));
+                System.out.println(String.format("Token : [%s], [%s]", task.currentToken, tokenCache.get(task.currentToken)));
             }
         }
         if (hasError == false) {
@@ -138,6 +148,8 @@ public class SingleUserPaymentLoadTest {
         executorService.shutdownNow();
         walletCache.clear();
         tokenCache.clear();
+        shopperCache.clear();
+        paymentCache.clear();
         manager.close();
     }
 
@@ -147,17 +159,13 @@ public class SingleUserPaymentLoadTest {
     private static final String user = "admin";
     private static final String password = "password";
 
-    private static final String CACHE_CONFIG =
+    private static final String NON_TX_CACHE_CONFIG =
             "<distributed-cache name=\"%s\">"
                     + " <encoding media-type=\"application/x-protostream\"/>"
                     + " <groups enabled=\"true\"/>"
-//                    + "<locking/>"
-//                    + "<locking concurrency-level=\"32\" acquire-timeout=\"1000000\" striping=\"false\"/>"
-//                    + "<state-transfer timeout=\"1000000\"/>"
-//                    + "<transaction auto-commit=\"false\" mode=\"BATCH\" notifications=\"false\" transaction-manager-lookup=\"org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup\"/>"
                     + "</distributed-cache>";
 
-    private static final String TRANSACTIONAL_CACHE_CONFIG =
+    private static final String TX_CACHE_CONFIG =
             "<distributed-cache name=\"%s\">"
                     + " <encoding media-type=\"application/x-protostream\"/>"
                     + " <groups enabled=\"true\"/>"
@@ -199,16 +207,16 @@ public class SingleUserPaymentLoadTest {
 
 class PaymentLoader implements Runnable {
 
-    private final Counter counter;
-    private final List<Token> tokenList;
+    private final AtomicInteger counter;
+    private final List<TokenKey> tokenList;
     private final RemoteCache<ShopperKey, WalletEntity> walletCache;
-    public final List<Token> completedTokenList;
-    public volatile Token currentToken;
+    public final List<TokenKey> completedTokenList;
+    public volatile TokenKey currentToken;
 
-    public PaymentLoader(List<Token> tokenList, RemoteCache<ShopperKey, WalletEntity> walletCache, Counter counter) {
+    public PaymentLoader(List<TokenKey> tokenList, RemoteCache<ShopperKey, WalletEntity> walletCache, AtomicInteger counter) {
         this.tokenList = tokenList;
         this.walletCache = walletCache;
-        completedTokenList = new ArrayList<>(tokenList.size());
+        this.completedTokenList = new ArrayList<>(tokenList.size());
         this.counter = counter;
     }
 
@@ -221,14 +229,15 @@ class PaymentLoader implements Runnable {
             payInfo.put("storeId", 1);
             payInfo.put("storeName", "");
 
-            for (Token t : tokenList) {
+            // 所有しているトークンを連続で使用する
+            for (TokenKey t : tokenList) {
 
                 currentToken = t;
 
-                payInfo.put("tokenId", t.getTokenId().value);
-                payInfo.put("shopperId", t.getShopperId().value);
+                payInfo.put("tokenId", t.getTokenId());
+                payInfo.put("shopperId", t.getOwnerId());
 
-                walletCache.execute("PaymentTask", payInfo, new ShopperKey(t.getShopperId().value));
+                walletCache.execute("PaymentTask", payInfo, new ShopperKey(t.getOwnerId()));
                 completedTokenList.add(t);
             }
             // 全部終わったら処理中のトークンをnullにする
@@ -237,19 +246,7 @@ class PaymentLoader implements Runnable {
             throw e;
         } finally {
             // 負荷かけが終わったら完了タスク数を1増やす
-            counter.increment();
+            counter.incrementAndGet();
         }
-    }
-}
-
-class Counter {
-    private final AtomicInteger counter = new AtomicInteger(0);
-
-    public void increment() {
-        counter.incrementAndGet();
-    }
-
-    public int get() {
-        return counter.get();
     }
 }

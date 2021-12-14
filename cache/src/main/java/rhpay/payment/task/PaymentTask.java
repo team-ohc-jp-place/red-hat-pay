@@ -59,6 +59,7 @@ public class PaymentTask implements ServerTask<PaymentResponse> {
             Cache<ShopperKey, WalletEntity> walletCache = parameter.cache;
             CacheStream cacheStream = walletCache.entrySet().stream();
             Event distributedTaskEvent = new CallDistributedTaskEvent(SegmentService.getSegment(walletCache, key), "paymentFunction");
+
             try {
                 distributedTaskEvent.begin();
                 cacheStream.filterKeys(Set.of(key)).forEach(paymentFunction);
@@ -73,9 +74,12 @@ public class PaymentTask implements ServerTask<PaymentResponse> {
             try {
                 cacheUseEvent.begin();
                 PaymentEntity paymentEntity = paymentCache.get(tokenKey);
+                cacheUseEvent.commit();
                 return new PaymentResponse(storeId, shopperId, tokenId, paymentEntity.getBillingAmount(), paymentEntity.getBillingDateTime());
             } finally {
-                cacheUseEvent.commit();
+                if(cacheUseEvent.shouldCommit()) {
+                    cacheUseEvent.commit();
+                }
             }
         } finally {
             taskEvent.commit();
