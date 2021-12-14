@@ -18,7 +18,7 @@ spec:
 #      ephemeralStorage: false
 #      storageClassName: my-storage-class
   container:
-    extraJvmOpts: "-XX:NativeMemoryTracking=summary -Xlog:gc*:stdout:time,level,tags"
+    extraJvmOpts: "-XX:NativeMemoryTracking=summary -Xlog:gc*:stdout:time,level,tags -XX:StartFlightRecording=name=RedHatPay,settings=default,disk=true,filename=RedHatPayRecording.jfr,maxage=15m,dumponexit=true"
     cpu: "1000m"
     memory: 1Gi
   logging:
