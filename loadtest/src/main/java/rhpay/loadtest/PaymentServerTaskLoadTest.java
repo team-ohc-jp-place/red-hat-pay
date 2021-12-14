@@ -8,10 +8,8 @@ import org.infinispan.commons.configuration.XMLStringConfiguration;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import rhpay.payment.cache.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.FileInputStream;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -178,8 +176,8 @@ public class PaymentServerTaskLoadTest {
     }
 
     private static final String hostname = "127.0.0.1";
-    private static final int port = 11222;
-    private static final boolean isAuth = false;
+    private static final String port = "11222";
+    private static final String isAuth = "false";
     private static final String user = "admin";
     private static final String password = "password";
 
@@ -199,6 +197,14 @@ public class PaymentServerTaskLoadTest {
 
     private static Configuration createConfiguration() throws Exception {
 
+        Properties prop = new Properties();
+        try {
+            prop.load(new FileInputStream("./infinispan.properties"));
+            System.out.println("infinispan.propertiesを読み込みました");
+        }catch(Exception e){
+            System.err.println("infinispan.propertiesが読み込まれませんでした");
+        }
+
         ConfigurationBuilder cb
                 = new ConfigurationBuilder();
         cb.marshaller(new ProtoStreamMarshaller())
@@ -206,21 +212,17 @@ public class PaymentServerTaskLoadTest {
                 .enable()
                 .jmxDomain("org.infinispan")
                 .addServer()
-                .host(hostname)
-                .port(port)
-                .addContextInitializer("rhpay.loadtest.system.PaymentSchemaImpl")
-                // デフォルトは10
-                .asyncExecutorFactory().addExecutorProperty("infinispan.client.hotrod.default_executor_factory.pool_size", "10")
-                //デフォルトは100,000
-                .addExecutorProperty("infinispan.client.hotrod.default_executor_factory.queue_size", "100000");
+                .host(prop.getProperty("hostname", hostname))
+                .port(Integer.parseInt(prop.getProperty("port", port)))
+                .addContextInitializer("rhpay.loadtest.system.PaymentSchemaImpl");
 
-        if (isAuth) {
+        if (Boolean.parseBoolean(prop.getProperty("auth", isAuth))) {
             cb.security()
                     .authentication()
                     .realm("default")
                     .saslMechanism("DIGEST-MD5")
-                    .username(user)
-                    .password(password);
+                    .username(prop.getProperty("user", user))
+                    .password(prop.getProperty("password", password));
         }
 
         return cb.build();
