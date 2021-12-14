@@ -6,7 +6,7 @@ spec:
   cluster: example-infinispan
   config: |
     echo "creating schema..."
-    schema --upload=../../cache/target/classes/proto/payment.proto payment.proto
+    schema --upload=../../cache/target/classes/proto/PaymentSchema.proto PaymentSchema.proto
     schema --upload=../../cache/target/classes/proto/PointSchema.proto PointSchema.proto
     echo "list Protobuf schema"
     ls schemas
