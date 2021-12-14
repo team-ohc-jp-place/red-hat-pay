@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class SingleUserPaymentLoadTest {
+public class PaymentServerTaskLoadTest {
 
     private static final String TOKEN_CACHE_NAME = "token";
     private static final String WALLET_CACHE_NAME = "wallet";
@@ -24,8 +24,8 @@ public class SingleUserPaymentLoadTest {
 
     public static void main(String... args) throws Exception {
 
-        if (args.length == 3) {
-            System.out.println("");
+        if (args.length != 3) {
+            System.out.println("アプリケーションの引数に <ユーザ数> <ユーザ毎の決済数> <並列度> を指定して下さい");
             System.exit(1);
         }
 
@@ -76,15 +76,22 @@ public class SingleUserPaymentLoadTest {
             for (int j = 0; j < paymentNumPerUser; j++) {
                 int tokenId = i * paymentNumPerUser + j;
                 //Tokenをキャッシュする
-                TokenKey key = new TokenKey(userNum, String.valueOf(tokenId));
+                TokenKey key = new TokenKey(i, String.valueOf(tokenId));
                 tokenCache.put(key, new TokenEntity(TokenStatus.UNUSED));
                 //Tokenを処理へ渡す
-                tokenLists[tokenId / paymentNumPerUser].add(key);
+                int assignedThreadNo = (tokenId * parallelNum) / totalPaymentNum;
+                tokenLists[assignedThreadNo].add(key);
             }
         }
 
         System.out.println(String.format("Cached Token number is %d", tokenCache.size()));
         System.out.println(String.format("Unused cached Token number is %d", tokenCache.entrySet().stream().filter(e -> (e.getValue().getStatus().equals(TokenStatus.UNUSED))).count()));
+        System.out.println("Number of tokens each thread has :");
+        int threadNo = 0;
+        for (List<TokenKey> t : tokenLists) {
+            System.out.println(String.format("No %d thread has %d tokens", threadNo, t.size()));
+            threadNo++;
+        }
 
         // 負荷をかけるスレッドを作成
         final LinkedBlockingQueue<Runnable> rushTaskQueue = new LinkedBlockingQueue<>(parallelNum);
@@ -94,22 +101,39 @@ public class SingleUserPaymentLoadTest {
                 rushTaskHandler);
 
         // 処理するタスクを作成
-        final AtomicInteger counter = new AtomicInteger(0);
+        final AtomicInteger readyCounter = new AtomicInteger(0);
+        final AtomicInteger completeCounter = new AtomicInteger(0);
         PaymentLoader[] loaders = new PaymentLoader[parallelNum];
         for (int i = 0; i < parallelNum; i++) {
-            loaders[i] = new PaymentLoader(tokenLists[i], manager.getCache(WALLET_CACHE_NAME), counter);
+            loaders[i] = new PaymentLoader(readyCounter, tokenLists[i], manager.getCache(WALLET_CACHE_NAME), completeCounter);
         }
 
         // 負荷をかける
-        long start = System.currentTimeMillis();
         for (PaymentLoader task : loaders) {
             executorService.execute(task);
         }
 
-        // クライアントからの負荷を全部処理し終わるのを待つ
-        while (counter.get() != parallelNum) {
+        // クライアントからの負荷を欠ける準備が終わるのを待つ
+        while (readyCounter.get() != parallelNum) {
             try {
-                TimeUnit.SECONDS.sleep(1);
+                TimeUnit.MILLISECONDS.sleep(10);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // 開始時間を測定
+        long start = System.currentTimeMillis();
+
+        // 負荷掛けを開始する
+        for (PaymentLoader task : loaders) {
+            task.startLoad();
+        }
+
+        // クライアントからの負荷を全部処理し終わるのを待つ
+        while (completeCounter.get() != parallelNum) {
+            try {
+                TimeUnit.MILLISECONDS.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -201,23 +225,29 @@ public class SingleUserPaymentLoadTest {
 
         return cb.build();
     }
-
-
 }
 
 class PaymentLoader implements Runnable {
 
-    private final AtomicInteger counter;
+    private final AtomicInteger readyCounter;
+    private final AtomicInteger completeCounter;
     private final List<TokenKey> tokenList;
     private final RemoteCache<ShopperKey, WalletEntity> walletCache;
     public final List<TokenKey> completedTokenList;
+    public volatile boolean isStart = false;
+
     public volatile TokenKey currentToken;
 
-    public PaymentLoader(List<TokenKey> tokenList, RemoteCache<ShopperKey, WalletEntity> walletCache, AtomicInteger counter) {
+    public PaymentLoader(AtomicInteger readyCounter, List<TokenKey> tokenList, RemoteCache<ShopperKey, WalletEntity> walletCache, AtomicInteger completeCounter) {
+        this.readyCounter = readyCounter;
         this.tokenList = tokenList;
         this.walletCache = walletCache;
         this.completedTokenList = new ArrayList<>(tokenList.size());
-        this.counter = counter;
+        this.completeCounter = completeCounter;
+    }
+
+    public void startLoad() {
+        this.isStart = true;
     }
 
     @Override
@@ -228,6 +258,18 @@ class PaymentLoader implements Runnable {
             payInfo.put("amount", 1);
             payInfo.put("storeId", 1);
             payInfo.put("storeName", "");
+
+            // 準備が出来たことを知らせる
+            readyCounter.incrementAndGet();
+
+            // 負荷をかける号令を待つ
+            while (!this.isStart) {
+                try {
+                    TimeUnit.MILLISECONDS.sleep(1);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
 
             // 所有しているトークンを連続で使用する
             for (TokenKey t : tokenList) {
@@ -243,10 +285,11 @@ class PaymentLoader implements Runnable {
             // 全部終わったら処理中のトークンをnullにする
             currentToken = null;
         } catch (Exception e) {
+            e.printStackTrace();
             throw e;
         } finally {
             // 負荷かけが終わったら完了タスク数を1増やす
-            counter.incrementAndGet();
+            completeCounter.incrementAndGet();
         }
     }
 }
