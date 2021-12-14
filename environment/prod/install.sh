@@ -12,6 +12,7 @@ sleep 60
 
 oc apply -f create_data_grid.yaml
 oc apply -f mycache.yaml
+echo "sleep 60"
 sleep 60
 oc apply -f put_schema.yaml
 
@@ -46,7 +47,7 @@ oc apply -f create_cryostat.yaml
 #oc delete cache tokencachedefinition
 #oc delete cache usercachedefinition
 #oc delete cache walletcachedefinition
-#oc delete batch mybatch
+#oc delete batch put-schema
 #oc delete kafka my-cluster
 #oc delete kafkatopic point
 #oc delete kafkatopic payment
