@@ -8,6 +8,9 @@ import jdk.jfr.Label;
 @Category({"RedHatPay", "DataGrid"})
 public class TaskEvent extends Event {
 
+    @Label("traceId")
+    private final String traceId;
+
     @Label("taskName")
     private final String taskName;
 
@@ -17,7 +20,8 @@ public class TaskEvent extends Event {
     @Label("tokenId")
     private final String tokenId;
 
-    public TaskEvent(String taskName, int shopperId, String tokenId) {
+    public TaskEvent(String traceId, String taskName, int shopperId, String tokenId) {
+        this.traceId = traceId;
         this.taskName = taskName;
         this.shopperId = shopperId;
         this.tokenId = tokenId;

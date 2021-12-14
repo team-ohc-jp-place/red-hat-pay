@@ -3,10 +3,8 @@ package rhpay.payment.task;
 import jdk.jfr.Event;
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
-import org.infinispan.container.entries.metadata.MetadataImmortalCacheEntry;
 import org.infinispan.tasks.ServerTask;
 import org.infinispan.tasks.TaskContext;
-import org.infinispan.util.function.SerializableBiConsumer;
 import rhpay.monitoring.CacheUseEvent;
 import rhpay.monitoring.CallDistributedTaskEvent;
 import rhpay.monitoring.SegmentService;
@@ -27,6 +25,7 @@ public class PaymentTask implements ServerTask<PaymentResponse> {
     public void setTaskContext(TaskContext taskContext) {
 
         Map<String, ?> receivedParam = taskContext.getParameters().get();
+        final String traceId = (String) receivedParam.get("traceId");
         final int shopperId = (Integer) receivedParam.get("shopperId");
         final String tokenId = (String) receivedParam.get("tokenId");
         final int amount = (Integer) receivedParam.get("amount");
@@ -34,7 +33,7 @@ public class PaymentTask implements ServerTask<PaymentResponse> {
         final String storeName = (String) receivedParam.get("storeName");
         Cache<ShopperKey, WalletEntity> cache = (Cache<ShopperKey, WalletEntity>) taskContext.getCache().get();
 
-        PaymentDistParam parameter = new PaymentDistParam(shopperId, tokenId, amount, storeId, storeName, cache);
+        PaymentDistParam parameter = new PaymentDistParam(traceId, shopperId, tokenId, amount, storeId, storeName, cache);
         parameterThreadLocal.set(parameter);
     }
 
@@ -43,13 +42,14 @@ public class PaymentTask implements ServerTask<PaymentResponse> {
 
         PaymentDistParam parameter = parameterThreadLocal.get();
 
+        final String traceId = parameter.traceId;
         final int shopperId = parameter.shopperId;
         final String tokenId = parameter.tokenId;
         final int amount = parameter.amount;
         final int storeId = parameter.storeId;
         final String storeName = parameter.storeName;
 
-        Event taskEvent = new TaskEvent("PaymentTask", shopperId, tokenId);
+        Event taskEvent = new TaskEvent(traceId, "PaymentTask", shopperId, tokenId);
         taskEvent.begin();
 
         try {
@@ -98,6 +98,8 @@ public class PaymentTask implements ServerTask<PaymentResponse> {
  */
 class PaymentDistParam {
 
+    final String traceId;
+
     final int shopperId;
 
     final String tokenId;
@@ -110,7 +112,8 @@ class PaymentDistParam {
 
     final Cache<ShopperKey, WalletEntity> cache;
 
-    public PaymentDistParam(int shopperId, String tokenId, int amount, int storeId, String storeName, Cache<ShopperKey, WalletEntity> cache) {
+    public PaymentDistParam(String traceId, int shopperId, String tokenId, int amount, int storeId, String storeName, Cache<ShopperKey, WalletEntity> cache) {
+        this.traceId = traceId;
         this.shopperId = shopperId;
         this.tokenId = tokenId;
         this.amount = amount;

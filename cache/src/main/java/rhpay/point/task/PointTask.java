@@ -37,6 +37,7 @@ public class PointTask implements ServerTask<PointEntity> {
 
         Map<String, ?> param = taskContext.getParameters().get();
 
+        String traceId = (String) param.get("traceId");
         StoreId storeId = new StoreId((Integer) param.get("storeId"));
         ShopperId shopperId = new ShopperId((Integer) param.get("ownerId"));
         TokenId tokenId = new TokenId((String) param.get("tokenId"));
@@ -44,7 +45,7 @@ public class PointTask implements ServerTask<PointEntity> {
         final LocalDateTime dateTime = LocalDateTime.ofEpochSecond((Long) param.get("epoch"), 0, ZoneOffset.of("+09:00"));
         Payment payment = new Payment(storeId, shopperId, tokenId, billAmount, dateTime);
 
-        PointTaskParameter parameter = new PointTaskParameter(payment, pointService, pointCache);
+        PointTaskParameter parameter = new PointTaskParameter(traceId, payment, pointService, pointCache);
         parameterThreadLocal.set(parameter);
     }
 
@@ -52,6 +53,7 @@ public class PointTask implements ServerTask<PointEntity> {
     public PointEntity call() throws Exception {
 
         PointTaskParameter parameter = parameterThreadLocal.get();
+        String traceId = parameter.traceId;
 
         // ドメインのオブジェクトを作成
         Payment payment = parameter.payment;
@@ -61,7 +63,7 @@ public class PointTask implements ServerTask<PointEntity> {
 
         TransactionManager transactionManager = parameter.pointCache.getAdvancedCache().getTransactionManager();
 
-        Event taskEvent = new TaskEvent("PointTask", parameter.payment.getShopperId().value, parameter.payment.getTokenId().value);
+        Event taskEvent = new TaskEvent(traceId, "PointTask", parameter.payment.getShopperId().value, parameter.payment.getTokenId().value);
         taskEvent.begin();
         try {
             // トランザクションを開始する
@@ -91,11 +93,13 @@ public class PointTask implements ServerTask<PointEntity> {
 
 class PointTaskParameter {
 
+    public final String traceId;
     public final Payment payment;
     public final PointAddService pointService;
     public final Cache<ShopperKey, PointEntity> pointCache;
 
-    public PointTaskParameter(Payment payment, PointAddService pointService, Cache<ShopperKey, PointEntity> pointCache) {
+    public PointTaskParameter(String traceId, Payment payment, PointAddService pointService, Cache<ShopperKey, PointEntity> pointCache) {
+        this.traceId = traceId;
         this.payment = payment;
         this.pointService = pointService;
         this.pointCache = pointCache;

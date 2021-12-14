@@ -1,5 +1,6 @@
 package rhpay.point.repository;
 
+import io.opentracing.Tracer;
 import rhpay.payment.domain.Payment;
 import rhpay.point.domain.Point;
 import rhpay.point.cache.PointEntity;
@@ -19,12 +20,16 @@ import java.util.Map;
 public class CachePointDelegateRepository implements PointDelegateRepository {
 
     @Inject
+    Tracer tracer;
+
+    @Inject
     @Remote("point")
     RemoteCache<ShopperKey, PointEntity> pointCache;
 
     public Point invoke(Payment payment) {
 
         Map<String, Object> payInfo = new HashMap<>();
+        payInfo.put("traceId", (tracer == null) ? "" : tracer.activeSpan().context().toTraceId());
         payInfo.put("ownerId", payment.getShopperId().value);
         payInfo.put("amount", payment.getBillingAmount().value);
         payInfo.put("storeId", payment.getStoreId().value);

@@ -1,5 +1,6 @@
 package rhpay.payment.repository;
 
+import io.opentracing.Tracer;
 import io.quarkus.infinispan.client.Remote;
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
@@ -19,6 +20,9 @@ import java.util.stream.Stream;
 public class CacheDelegateRepository implements DelegateRepository {
 
     @Inject
+    Tracer tracer;
+
+    @Inject
     @Remote("wallet")
     RemoteCache<ShopperKey, WalletEntity> walletCache;
 
@@ -26,6 +30,7 @@ public class CacheDelegateRepository implements DelegateRepository {
     public Payment invoke(ShopperId shopperId, TokenId tokenId, CoffeeStore store, Money amount) {
 
         Map<String, Object> payInfo = new HashMap<>();
+        payInfo.put("traceId", (tracer == null) ? "" : tracer.activeSpan().context().toTraceId());
         payInfo.put("shopperId", shopperId.value);
         payInfo.put("tokenId", tokenId.value);
         payInfo.put("amount", amount.value);
