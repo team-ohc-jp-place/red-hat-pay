@@ -1,3 +1,7 @@
+# Login to OpenShift
+oc login -u opentlc-mgr -p r3dh4t1!
+oc project user1-project
+
 # DataGrid
 rm -f ./artifacts/*.jar
 cp ../../cache/target/cache-1.0-SNAPSHOT.jar ./artifacts/
