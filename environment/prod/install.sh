@@ -43,6 +43,14 @@ oc apply -f create_grafana_dashboard.yaml
 # Cryostat
 oc apply -f create_cryostat.yaml
 
+# Service Mesh
+oc apply -f servicemesh_controlplane.yaml
+oc apply -f servicemesh_memberroll-default.yaml
+oc apply -f servicemesh-gateway.yaml
+oc apply -f servicemesh_destination-rule-all.yaml
+
+oc -n istio-system get route istio-ingressgateway -o jsonpath='{.spec.host}'
+
 # clean up
 #oc delete is,bc,deploy,svc -l app=httpd
 #oc delete infinispan example-infinispan
