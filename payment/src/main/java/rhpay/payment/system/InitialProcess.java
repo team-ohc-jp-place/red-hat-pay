@@ -32,23 +32,28 @@ public class InitialProcess {
             "<distributed-cache name=\"%s\">"
                     + " <encoding media-type=\"application/x-protostream\"/>"
                     + " <groups enabled=\"true\"/>"
-                    + "<locking concurrency-level=\"1000\" acquire-timeout=\"15000\" striping=\"false\"/>"
-                    + "<transaction mode=\"BATCH\" locking=\"PESSIMISTIC\"/>"
+                    + " <locking/>"
+                    + " <transaction mode=\"BATCH\" locking=\"PESSIMISTIC\"/>"
+                    + " <memory max-count=\"100000\" when-full=\"REMOVE\"/>"
                     + "</distributed-cache>";
 
     void onStart(@Observes StartupEvent ev) {
         Set<String> cacheNames = cacheManager.getCacheNames();
         if (!cacheNames.contains("user")) {
             cacheManager.administration().getOrCreateCache("user", new XMLStringConfiguration(String.format(CACHE_CONFIG, "user")));
+            System.out.println("user cache was created");
         }
         if (!cacheNames.contains("wallet")) {
             cacheManager.administration().getOrCreateCache("wallet", new XMLStringConfiguration(String.format(TRANSACTIONAL_CACHE_CONFIG, "wallet")));
+            System.out.println("wallet cache was created");
         }
         if (!cacheNames.contains("token")) {
             cacheManager.administration().getOrCreateCache("token", new XMLStringConfiguration(String.format(TRANSACTIONAL_CACHE_CONFIG, "token")));
+            System.out.println("token cache was created");
         }
         if (!cacheNames.contains("payment")) {
             cacheManager.administration().getOrCreateCache("payment", new XMLStringConfiguration(String.format(TRANSACTIONAL_CACHE_CONFIG, "payment")));
+            System.out.println("payment cache was created");
         }
     }
 }

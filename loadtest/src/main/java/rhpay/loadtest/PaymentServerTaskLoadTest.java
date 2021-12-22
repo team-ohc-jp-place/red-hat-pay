@@ -191,8 +191,9 @@ public class PaymentServerTaskLoadTest {
             "<distributed-cache name=\"%s\">"
                     + " <encoding media-type=\"application/x-protostream\"/>"
                     + " <groups enabled=\"true\"/>"
-                    + "<locking concurrency-level=\"1000\" acquire-timeout=\"15000\" striping=\"false\"/>"
-                    + "<transaction mode=\"BATCH\" locking=\"PESSIMISTIC\"/>"
+                    + " <locking/>"
+                    + " <transaction mode=\"BATCH\" locking=\"PESSIMISTIC\"/>"
+                    + " <memory max-count=\"100000\" when-full=\"REMOVE\"/>"
                     + "</distributed-cache>";
 
     private static Configuration createConfiguration() throws Exception {
