@@ -18,14 +18,16 @@ $ bash environment/build/build.sh
 
 # アプリケーションコンテナのビルド・プッシュ
 ```shell
+$ docker login quay.io
+$ export quay_user=xxxx
 $ cd payment/
 $ docker build -f src/main/docker/Dockerfile.jvm -t quarkus/payment-jvm .
-$ docker image tag quarkus/payment-jvm:latest quay.io/mamoru1112/payment-jvm:latest
-$ docker push quay.io/mamoru1112/payment-jvm:latest
+$ docker image tag quarkus/payment-jvm:latest quay.io/${quay_user}/payment-jvm:latest
+$ docker push quay.io/${quay_user}/payment-jvm:latest
 $ cd ../point/
 $ docker build -f src/main/docker/Dockerfile.jvm -t quarkus/point-jvm .
-$ docker image tag quarkus/point-jvm:latest quay.io/mamoru1112/point-jvm:latest
-$ docker push quay.io/mamoru1112/point-jvm:latest
+$ docker image tag quarkus/point-jvm:latest quay.io/${quay_user}/point-jvm:latest
+$ docker push quay.io/${quay_user}/point-jvm:latest
 ```
 
 # 環境をデプロイ
