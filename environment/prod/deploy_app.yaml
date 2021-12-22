@@ -13,6 +13,8 @@ spec:
     metadata:
       labels:
         app: payment
+      annotations:
+        sidecar.istio.io/inject: "true"
     spec:
       containers:
       - name: payment-jvm
@@ -37,6 +39,8 @@ spec:
     metadata:
       labels:
         app: point
+      annotations:
+        sidecar.istio.io/inject: "true"
     spec:
       containers:
       - name: point-jvm
