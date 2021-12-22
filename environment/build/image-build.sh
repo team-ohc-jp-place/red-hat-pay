@@ -1,6 +1,3 @@
-# Installing Podman
-sudo yum install -y podman
-
 # Login OpenShift Internal Registry
 REGISTRY_URL=$(oc get route default-route -n openshift-image-registry --template={{.spec.host}})
 PROJECT_NAME=red-hat-pay
