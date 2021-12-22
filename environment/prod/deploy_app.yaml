@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: payment-jvm
-        image: quay.io/mamoru1112/payment-jvm:latest
+        image: image-registry.openshift-image-registry.svc:5000/red-hat-pay/payment-jvm:latest
         ports:
         - containerPort: 8080
         - containerPort: 9091
@@ -40,7 +40,7 @@ spec:
     spec:
       containers:
       - name: point-jvm
-        image: quay.io/mamoru1112/point-jvm:latest
+        image: image-registry.openshift-image-registry.svc:5000/red-hat-pay/point-jvm:latest
         ports:
         - containerPort: 8080
         - containerPort: 9091
