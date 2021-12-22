@@ -9,10 +9,15 @@ $ oc new-project red-hat-pay
 - Data Grid
 - Grafana Operator (Community)
 
-# アプリケーションをビルド
+# 初期処理
 ```shell
 $ git clone https://github.com/team-ohc-jp-place/red-hat-pay.git
 $ cd red-hat-pay
+$ bash environment/init.sh 
+```
+
+# アプリケーションをビルド
+```shell
 $ bash environment/build/build.sh
 ```
 
@@ -23,7 +28,6 @@ $ bash environment/build/image-build.sh
 
 # 環境をデプロイ
 ```shell
-$ oc project red-hat-pay
 $ cd environment/prod
 $ bash install.sh
 ```
