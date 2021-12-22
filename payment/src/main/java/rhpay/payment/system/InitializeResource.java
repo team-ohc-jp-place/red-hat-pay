@@ -11,6 +11,8 @@ import rhpay.payment.cache.*;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import java.util.HashMap;
+import java.util.Map;
 
 @Path("/")
 @Traced
@@ -36,6 +38,7 @@ public class InitializeResource {
     @Inject
     Template initialize;
 
+    private final int BATCH_ENTRY_NUM = 1000;
 
     @GET
     @Path("/init/{userNum}/{amount}/{autoCharge}")
@@ -49,10 +52,29 @@ public class InitializeResource {
         walletCache.clear();
 
         // キャッシュのデータを作成
+        Map<ShopperKey, ShopperEntity> userMap = new HashMap<>(BATCH_ENTRY_NUM);
+        Map<ShopperKey, WalletEntity> walletMap = new HashMap<>(BATCH_ENTRY_NUM);
+        int batchCount = 0;
+
         for(int i = 0 ; i < userNum ; i++){
+            batchCount++;
             ShopperKey shopperKey = new ShopperKey(i);
-            userCache.put(shopperKey, new ShopperEntity("user"+i));
-            walletCache.put(shopperKey, new WalletEntity(amount, autoCharge));
+            userMap.put(shopperKey, new ShopperEntity("user"+i));
+            walletMap.put(shopperKey, new WalletEntity(amount, autoCharge));
+
+            if(batchCount == BATCH_ENTRY_NUM){
+                userCache.putAllAsync(userMap);
+                walletCache.putAllAsync(walletMap);
+
+                batchCount = 0;
+                userMap.clear();
+                walletMap.clear();
+            }
+        }
+
+        if(batchCount != 0){
+            userCache.putAllAsync(userMap);
+            walletCache.putAllAsync(walletMap);
         }
 
         return Uni.createFrom().completionStage(() -> initialize.instance().renderAsync());
