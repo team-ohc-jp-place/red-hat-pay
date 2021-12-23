@@ -20,7 +20,8 @@ public class ConsumerInterceptor {
     @AroundInvoke
     Object consumerInvocation(InvocationContext context) throws Exception {
 
-        Event event = (tracer == null) ? new ConsumerEvent("", context.getMethod().getName()) : new ConsumerEvent(tracer.activeSpan().context().toTraceId(), context.getMethod().getName());
+        String traceId = (tracer == null || tracer.activeSpan() == null || tracer.activeSpan().context() == null || tracer.activeSpan().context().toTraceId() == null) ? "" : tracer.activeSpan().context().toTraceId();
+        Event event = new ConsumerEvent(traceId, context.getMethod().getName());
         event.begin();
         try {
             Object ret = context.proceed();
