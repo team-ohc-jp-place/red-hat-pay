@@ -16,10 +16,10 @@ echo http://$(oc get route app --template={{.spec.host}})
 * テストスクリプトの編集 (locustfile.py)
 * テストスクリプト・ターゲットホストの変更
 ```
-./seed.sh locustfile.py (ターゲットホスト名)
+./seed.sh MultiUserTaskSet.py (ターゲットホスト名)
 
 # コマンド実行例
-# ./seed.sh locustfile.py https://echo-api.3scale.net:443
+# ./seed.sh MultiUserTaskSet.py https://echo-api.3scale.net:443
 ```
 
 * ConfigMap の変更を検知し、自動的に Locust Pod が再デプロイされる

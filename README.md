@@ -23,6 +23,11 @@ $ cd environment/prod
 $ bash install.sh
 ```
 
+# アプリのURL取得方法
+```shell
+echo "http://`oc -n rhp-istio-system get route istio-ingressgateway -o jsonpath='{.spec.host}'`/index"
+```
+
 # 環境を削除
 ```shell
 $ bash environment/cleanup.sh 
