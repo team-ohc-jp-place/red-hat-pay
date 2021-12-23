@@ -21,6 +21,7 @@ import rhpay.payment.service.ShopperService;
 import rhpay.payment.service.TokenService;
 
 import javax.transaction.SystemException;
+import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey, WalletEntity>, ImmortalCacheEntry> {
@@ -101,6 +102,7 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
 
         } catch (Exception e) {
             RuntimeException thrw = new RuntimeException("Fail to pay");
+            thrw.addSuppressed(e);
             try {
                 transactionManager.rollback();
             } catch (SystemException ex) {
@@ -115,7 +117,6 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
                     thrw.addSuppressed(e1);
                 }
             }
-            thrw.addSuppressed(e);
             thrw.printStackTrace();
             throw thrw;
         } finally {
