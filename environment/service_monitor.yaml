@@ -6,10 +6,10 @@ metadata:
   name: payment-monitor
 spec:
   endpoints:
-    - interval: 30s
-      port: web
-      scheme: http
-      path: /q/metrics/application
+  - interval: 30s
+    port: web
+    scheme: http
+    path: /q/metrics/application
   selector:
     matchLabels:
       app: payment
@@ -22,10 +22,10 @@ metadata:
   name: point-monitor
 spec:
   endpoints:
-    - interval: 30s
-      port: web
-      scheme: http
-  path: /q/metrics/application
-    selector:
+  - interval: 30s
+    port: web
+    scheme: http
+    path: /q/metrics/application
+  selector:
     matchLabels:
       app: point
