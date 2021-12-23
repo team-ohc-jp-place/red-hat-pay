@@ -28,8 +28,10 @@ public class CachePointDelegateRepository implements PointDelegateRepository {
 
     public Point invoke(Payment payment) {
 
+        String traceId = (tracer == null || tracer.activeSpan() == null || tracer.activeSpan().context() == null || tracer.activeSpan().context().toTraceId() == null) ? "" : tracer.activeSpan().context().toTraceId();
+
         Map<String, Object> payInfo = new HashMap<>();
-        payInfo.put("traceId", (tracer == null) ? "" : tracer.activeSpan().context().toTraceId());
+        payInfo.put("traceId", traceId);
         payInfo.put("ownerId", payment.getShopperId().value);
         payInfo.put("amount", payment.getBillingAmount().value);
         payInfo.put("storeId", payment.getStoreId().value);
