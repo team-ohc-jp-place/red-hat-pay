@@ -1,6 +1,4 @@
-# Login to OpenShift
-oc login -u opentlc-mgr -p r3dh4t1!
-oc project user2-project
+oc project red-hat-pay-monolith
 
 # PostgreSQL
 oc process postgresql-persistent -n openshift -p DATABASE_SERVICE_NAME=postgres -p POSTGRESQL_USER=postgres -p POSTGRESQL_PASSWORD=postgres -p POSTGRESQL_DATABASE=rhpay | oc create -f -

@@ -1,0 +1,31 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    k8s-app: prometheus-example-monitor
+  name: payment-monitor
+spec:
+  endpoints:
+    - interval: 30s
+      port: web
+      scheme: http
+      path: /q/metrics/application
+  selector:
+    matchLabels:
+      app: payment
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    k8s-app: prometheus-example-monitor
+  name: point-monitor
+spec:
+  endpoints:
+    - interval: 30s
+      port: web
+      scheme: http
+  path: /q/metrics/application
+    selector:
+    matchLabels:
+      app: point

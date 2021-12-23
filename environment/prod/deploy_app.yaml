@@ -58,7 +58,7 @@ metadata:
   name: payment
 spec:
   ports:
-  - name: 8080-tcp
+  - name: web
     port: 8080
     protocol: TCP
     targetPort: 8080
@@ -79,7 +79,7 @@ metadata:
   name: point
 spec:
   ports:
-  - name: 8080-tcp
+  - name: web
     port: 8080
     protocol: TCP
     targetPort: 8080
