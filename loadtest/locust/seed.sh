@@ -3,6 +3,9 @@
 testFile=""
 hostName=""
 
+export CURRENT_NS=`oc project -q`
+
+
 # Display prompt if not arguments passed
 if [[ -z "$1" && -z "$2" ]]
 then
@@ -55,3 +58,5 @@ rm ./config-map.yaml
 oc project locust
 oc set env dc/locust-master --overwrite CONFIG_HASH=`date +%s%N`
 oc set env dc/locust-slave --overwrite CONFIG_HASH=`date +%s%N`
+
+oc project ${CURRENT_NS}
