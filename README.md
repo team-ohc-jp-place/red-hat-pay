@@ -28,6 +28,11 @@ $ bash install.sh
 echo "http://`oc -n rhp-istio-system get route istio-ingressgateway -o jsonpath='{.spec.host}'`/index"
 ```
 
+# データの初期化
+```shell
+echo "http://`oc -n rhp-istio-system get route istio-ingressgateway -o jsonpath='{.spec.host}'`/init/3000/100000000/100000000"
+```
+
 # 環境を削除
 ```shell
 $ bash environment/cleanup.sh 
