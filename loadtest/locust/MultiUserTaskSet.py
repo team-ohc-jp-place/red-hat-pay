@@ -1,14 +1,16 @@
 from locust import HttpLocust, TaskSet, task, constant
-from random
+import random
 
 class MultiUserTaskSet(TaskSet):
 
     @task
     def loadtest(self):
-        user = str(random.randint(0, 99))
+        user = str(random.randint(0, 100000) % 3000)
         response1 = self.client.post("/pay/" + user)
+        if response1.status_code != 200:
+            print (response1)
         token = response1.json()["tokenId"]
-#        print (token)
+
 
         response2 = self.client.request(method="POST", url="/pay/" + user + "/" + token + "/1/1")
 #        print (response2.json())
