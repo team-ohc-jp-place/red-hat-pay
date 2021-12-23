@@ -29,8 +29,9 @@ public class CacheDelegateRepository implements DelegateRepository {
     @Override
     public Payment invoke(ShopperId shopperId, TokenId tokenId, CoffeeStore store, Money amount) {
 
+        String traceId = (tracer == null || tracer.activeSpan() == null || tracer.activeSpan().context() == null || tracer.activeSpan().context().toTraceId() == null) ? "" : tracer.activeSpan().context().toTraceId();
         Map<String, Object> payInfo = new HashMap<>();
-        payInfo.put("traceId", (tracer == null) ? "" : tracer.activeSpan().context().toTraceId());
+        payInfo.put("traceId", traceId);
         payInfo.put("shopperId", shopperId.value);
         payInfo.put("tokenId", tokenId.value);
         payInfo.put("amount", amount.value);
