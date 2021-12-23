@@ -67,8 +67,8 @@ objects:
                 value: --print-stats -P=8089
             resources:
               limits:
-                cpu: "100m"
-                memory: "256Mi"
+                cpu: "1000m"
+                memory: "1024Mi"
             ports:
             - name: comm
               containerPort: 5557
