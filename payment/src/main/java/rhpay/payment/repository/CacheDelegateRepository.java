@@ -5,6 +5,7 @@ import io.quarkus.infinispan.client.Remote;
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.client.hotrod.RemoteCache;
+import rhpay.monitoring.MonitorRepository;
 import rhpay.payment.cache.*;
 import rhpay.payment.domain.*;
 
@@ -17,6 +18,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 @RequestScoped
+@MonitorRepository
 public class CacheDelegateRepository implements DelegateRepository {
 
     @Inject
