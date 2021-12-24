@@ -1,11 +1,13 @@
 package rhpay.payment.repository;
 
 import jdk.jfr.Event;
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import rhpay.monitoring.CacheUseEvent;
 import rhpay.monitoring.SegmentService;
 import rhpay.payment.cache.TokenEntity;
 import rhpay.payment.cache.TokenKey;
+import rhpay.payment.cache.TokenStatus;
 import rhpay.payment.domain.ShopperId;
 import rhpay.payment.domain.Token;
 import rhpay.payment.domain.TokenException;
@@ -16,9 +18,9 @@ import rhpay.payment.repository.function.UsedTokenFunction;
 
 public class CacheTokenRepository implements TokenRepository {
 
-    private final Cache<TokenKey, TokenEntity> tokenCache;
+    private final AdvancedCache<TokenKey, TokenEntity> tokenCache;
 
-    public CacheTokenRepository(Cache<TokenKey, TokenEntity> tokenCache) {
+    public CacheTokenRepository(AdvancedCache<TokenKey, TokenEntity> tokenCache) {
         this.tokenCache = tokenCache;
     }
 
@@ -53,9 +55,9 @@ public class CacheTokenRepository implements TokenRepository {
             TokenKey tokenKey = new TokenKey(token.getShopperId().value, token.getTokenId().value);
             Event event = new CacheUseEvent(SegmentService.getSegment(tokenCache, tokenKey), "changeTokenStatusToProcessing");
             event.begin();
-            TokenEntity tokenEntity = tokenCache.compute(tokenKey, new ProcessingTokenFunction());
+            TokenEntity tokenEntity = tokenCache.put(tokenKey, new TokenEntity(TokenStatus.PROCESSING));
             event.commit();
-            Token newToken = new Token(token.getShopperId(), token.getTokenId(), tokenEntity.getStatus().toDomain());
+            Token newToken = new Token(token.getShopperId(), token.getTokenId(), rhpay.payment.domain.TokenStatus.PROCESSING);
             return newToken;
         } catch (Exception e) {
             TokenException exception = new TokenException("Could not change the token's status");
@@ -70,9 +72,9 @@ public class CacheTokenRepository implements TokenRepository {
             TokenKey tokenKey = new TokenKey(token.getShopperId().value, token.getTokenId().value);
             Event event = new CacheUseEvent(SegmentService.getSegment(tokenCache, tokenKey), "changeTokenStatusToUsed");
             event.begin();
-            TokenEntity tokenEntity = tokenCache.compute(tokenKey, new UsedTokenFunction());
+            TokenEntity tokenEntity = tokenCache.put(tokenKey, new TokenEntity(TokenStatus.USED));
             event.commit();
-            Token newToken = new Token(token.getShopperId(), token.getTokenId(), tokenEntity.getStatus().toDomain());
+            Token newToken = new Token(token.getShopperId(), token.getTokenId(), rhpay.payment.domain.TokenStatus.USED);
             return newToken;
         } catch (Exception e) {
             TokenException exception = new TokenException("Could not change the token's status");
@@ -88,9 +90,9 @@ public class CacheTokenRepository implements TokenRepository {
             TokenKey tokenKey = new TokenKey(token.getShopperId().value, token.getTokenId().value);
             Event event = new CacheUseEvent(SegmentService.getSegment(tokenCache, tokenKey), "changeTokenStatusToFail");
             event.begin();
-            TokenEntity tokenEntity = tokenCache.compute(tokenKey, new FailedTokenFunction());
+            TokenEntity tokenEntity = tokenCache.put(tokenKey, new TokenEntity(TokenStatus.FAILED));
             event.commit();
-            Token newToken = new Token(token.getShopperId(), token.getTokenId(), tokenEntity.getStatus().toDomain());
+            Token newToken = new Token(token.getShopperId(), token.getTokenId(), rhpay.payment.domain.TokenStatus.FAILED);
             return newToken;
         } catch (Exception e) {
             TokenException exception = new TokenException("Could not change the token's status");

@@ -1,9 +1,11 @@
 package rhpay.payment.task;
 
 import jdk.jfr.Event;
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataImmortalCacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
@@ -54,6 +56,7 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
     public void accept(Cache<ShopperKey, WalletEntity> walletCache, ImmortalCacheEntry entry) {
         EmbeddedCacheManager cacheManager = walletCache.getCacheManager();
         Cache<TokenKey, TokenEntity> tokenCache = cacheManager.getCache("token");
+        AdvancedCache<TokenKey, TokenEntity> advancedTokenCache = tokenCache.getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK);
         Cache<TokenKey, PaymentEntity> paymentCache = cacheManager.getCache("payment");
         Cache<ShopperKey, ShopperEntity> shopperCache = cacheManager.getCache("user");
 
@@ -61,7 +64,7 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
 
         BillingService billingService = new BillingService(new CacheBillingRepository(walletCache));
         ShopperService shopperService = new ShopperService(new CacheShopperRepository(shopperCache));
-        TokenService tokenService = new TokenService(new CacheTokenRepository(tokenCache));
+        TokenService tokenService = new TokenService(new CacheTokenRepository(advancedTokenCache));
         PaymentService paymentService = new PaymentService(new CachePaymentRepository(paymentCache));
 
         final ShopperId shopperId = new ShopperId(this.shopperId);
