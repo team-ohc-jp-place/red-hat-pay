@@ -5,7 +5,7 @@ metadata:
 spec:
   clusterName: example-infinispan
   name: payment
-  template: <distributed-cache name="payment"><encoding media-type="application/x-protostream"/><groups enabled="true"/><locking/><transaction mode="BATCH" locking="PESSIMISTIC" auto-commit="false"/><memory max-count="100000" when-full="REMOVE"/></distributed-cache>
+  template: <distributed-cache name="payment"><encoding media-type="application/x-protostream"/><groups enabled="true"/><locking concurrency-level="1000" acquire-timeout="15000" striping="false"/><transaction mode="BATCH" locking="PESSIMISTIC"/><memory max-count="100000" when-full="REMOVE"/></distributed-cache>
 ---
 apiVersion: infinispan.org/v2alpha1
 kind: Cache
@@ -14,7 +14,7 @@ metadata:
 spec:
   clusterName: example-infinispan
   name: wallet
-  template: <distributed-cache name="wallet"><encoding media-type="application/x-protostream"/><groups enabled="true"/><locking/><transaction mode="BATCH" locking="PESSIMISTIC" auto-commit="false"/><memory max-count="100000" when-full="REMOVE"/></distributed-cache>
+  template: <distributed-cache name="wallet"><encoding media-type="application/x-protostream"/><groups enabled="true"/><locking concurrency-level="1000" acquire-timeout="15000" striping="false"/><transaction mode="BATCH" locking="PESSIMISTIC"/><memory max-count="100000" when-full="REMOVE"/></distributed-cache>
 ---
 apiVersion: infinispan.org/v2alpha1
 kind: Cache
@@ -32,7 +32,7 @@ metadata:
 spec:
   clusterName: example-infinispan
   name: token
-  template: <distributed-cache name="token"><encoding media-type="application/x-protostream"/><groups enabled="true"/><locking/><transaction mode="BATCH" locking="PESSIMISTIC" auto-commit="false"/><memory max-count="100000" when-full="REMOVE"/></distributed-cache>
+  template: <distributed-cache name="token"><encoding media-type="application/x-protostream"/><groups enabled="true"/><locking concurrency-level="1000" acquire-timeout="15000" striping="false"/><transaction mode="BATCH" locking="PESSIMISTIC"/><memory max-count="100000" when-full="REMOVE"/></distributed-cache>
 ---
 apiVersion: infinispan.org/v2alpha1
 kind: Cache
@@ -41,4 +41,4 @@ metadata:
 spec:
   clusterName: example-infinispan
   name: point
-  template: <distributed-cache name="point"><encoding media-type="application/x-protostream"/><groups enabled="true"/><locking/><transaction mode="BATCH" locking="PESSIMISTIC" auto-commit="false"/><memory max-count="100000" when-full="REMOVE"/></distributed-cache>
+  template: <distributed-cache name="point"><encoding media-type="application/x-protostream"/><groups enabled="true"/><locking concurrency-level="1000" acquire-timeout="15000" striping="false"/><transaction mode="BATCH" locking="PESSIMISTIC"/><memory max-count="100000" when-full="REMOVE"/></distributed-cache>
