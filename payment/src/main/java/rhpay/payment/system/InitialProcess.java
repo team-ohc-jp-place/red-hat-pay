@@ -33,7 +33,7 @@ public class InitialProcess {
                     + " <encoding media-type=\"application/x-protostream\"/>"
                     + " <groups enabled=\"true\"/>"
                     + " <locking/>"
-                    + " <transaction mode=\"BATCH\" locking=\"PESSIMISTIC\"/>"
+                    + " <transaction mode=\"BATCH\" locking=\"PESSIMISTIC\" auto-commit=\"false\"/>"
                     + " <memory max-count=\"100000\" when-full=\"REMOVE\"/>"
                     + "</distributed-cache>";
 
