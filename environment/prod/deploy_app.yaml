@@ -19,6 +19,13 @@ spec:
       containers:
       - name: payment-jvm
         image: image-registry.openshift-image-registry.svc:5000/red-hat-pay/payment-jvm:latest
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1024Mi
+          requests:
+            cpu: 1000m
+            memory: 1024Mi
         ports:
         - containerPort: 8080
         - containerPort: 9091
