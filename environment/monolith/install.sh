@@ -19,7 +19,3 @@ cd ../environment/monolith/
 oc set resources deploymentconfig postgres --limits=cpu=1,memory=1024Mi --requests=cpu=1,memory=1024Mi
 oc set resources deployment monolith --limits=cpu=1,memory=1024Mi --requests=cpu=1,memory=1024Mi
 
-# clean up
-#oc delete secret,svc,pvc,dc -l template=postgresql-persistent-template
-#oc delete bc monolith
-#oc delete all -l app=monolith
