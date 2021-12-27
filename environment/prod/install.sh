@@ -40,7 +40,11 @@ oc apply -f servicemesh_memberroll-default.yaml
 oc apply -f servicemesh-gateway.yaml
 oc apply -f servicemesh_destination-rule-all.yaml
 
+# side car container injection
 sleep 30
+oc rollout restart deploy payment
+oc rollout restart deploy point
+
 echo ""
 echo "Please access to http://`oc -n rhp-istio-system get route istio-ingressgateway -o jsonpath='{.spec.host}'`/index"
 
