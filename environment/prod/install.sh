@@ -40,6 +40,7 @@ oc apply -f servicemesh_memberroll-default.yaml
 oc apply -f servicemesh-gateway.yaml
 oc apply -f servicemesh_destination-rule-all.yaml
 
+sleep 30
 echo ""
 echo "Please access to http://`oc -n rhp-istio-system get route istio-ingressgateway -o jsonpath='{.spec.host}'`/index"
 
