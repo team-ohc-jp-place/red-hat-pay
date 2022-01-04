@@ -3,6 +3,10 @@
 - Cryostat
 - Data Grid
 - Grafana Operator (Community)
+- OpenShift Elasticsearch Operator (stable-5.2)
+- Red Hat OpenShift distributed tracing platform
+- Kiali Operator
+- Red Hat OpenShift Service Mesh
 
 # 初期処理
 ```shell

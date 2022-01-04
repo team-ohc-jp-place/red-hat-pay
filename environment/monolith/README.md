@@ -1,6 +1,6 @@
 # OpenShift プロジェクト作成
 ```shell
-$ oc new-project monolith
+$ oc new-project red-hat-pay-monolith
 ``` 
 
 # アプリケーションをビルド
@@ -14,4 +14,9 @@ $ bash environment/build/build.sh
 ```shell
 $ cd environment/monolith
 $ bash install.sh
+```
+
+# 環境を削除
+```
+$ bash cleanup.sh
 ```
