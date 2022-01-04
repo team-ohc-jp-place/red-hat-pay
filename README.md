@@ -1,8 +1,6 @@
-# Operatorのインストール
+# クラスタへ各Operatorをインストール
 - Red Hat Integration - AMQ Streams
-- Cryostat
 - Data Grid
-- Grafana Operator (Community)
 - OpenShift Elasticsearch Operator (stable-5.2)
 - Red Hat OpenShift distributed tracing platform
 - Kiali Operator
@@ -15,6 +13,10 @@ $ cd red-hat-pay
 $ bash environment/init.sh 
 $ bash environment/setting.sh
 ```
+
+# Red Hat Pay名前空間へ各Operatorをインストール
+- Cryostat
+- Grafana Operator (Community)
 
 # アプリケーションのビルドとアプリケーションコンテナのビルド・プッシュ
 ```shell
