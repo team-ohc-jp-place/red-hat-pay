@@ -24,3 +24,5 @@ oc apply -f mycache.yaml
 echo "sleep 60"
 sleep 60
 oc apply -f put_schema.yaml
+
+oc patch statefulset example-infinispan --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/ports/-", "value": {"name": "jfr-jmx", "containerPort": 9091, "protocol": "TCP"} }]'

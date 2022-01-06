@@ -1,0 +1,20 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: example-infinispan-jfr-jmx
+  namespace: red-hat-pay
+  labels:
+    app: infinispan-service
+    clusterName: example-infinispan
+    infinispan_cr: example-infinispan
+spec:
+  ports:
+    - name: jfr-jmx
+      protocol: TCP
+      port: 9091
+      targetPort: 9091
+  selector:
+    app: infinispan-pod
+    clusterName: example-infinispan
+  type: ClusterIP
+  sessionAffinity: None
