@@ -16,6 +16,10 @@ echo "sleep 60"
 sleep 60
 oc apply -f put_schema.yaml
 
+# JFR for Infinispan
+oc patch statefulset example-infinispan --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/ports/-", "value": {"name": "jfr-jmx", "containerPort": 9091, "protocol": "TCP"} }]'
+oc apply -f enable_jfr_data_grid.yaml
+
 # AMQ Streams
 oc apply -f create_kafka_cluster.yaml
 oc apply -f create_kafka_topic.yaml
