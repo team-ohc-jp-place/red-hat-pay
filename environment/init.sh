@@ -17,5 +17,6 @@ oc apply -f environment/cluster-monitoring-config.yaml
 oc apply -f environment/service-account.yaml
 oc adm policy add-cluster-role-to-user cluster-monitoring-view -z infinispan-monitoring
 oc apply -f environment/service_monitor.yaml
+oc apply -f environment/cluster_logging.yaml
 
 echo "Please install some operators such as Data Grid, Cryostat on OpenShift Console"
