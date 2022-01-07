@@ -2,17 +2,16 @@ package rhpay.payment.repository;
 
 import jdk.jfr.Event;
 import org.infinispan.Cache;
-import rhpay.monitoring.CacheUseEvent;
 import rhpay.monitoring.SegmentService;
+import rhpay.monitoring.UseTokenEvent;
 import rhpay.payment.cache.PaymentEntity;
 import rhpay.payment.cache.TokenKey;
-import rhpay.payment.domain.Payment;
-import rhpay.payment.domain.ShopperId;
-import rhpay.payment.domain.TokenId;
+import rhpay.payment.domain.*;
 
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
-public class CachePaymentRepository implements PaymentRepository{
+public class CachePaymentRepository implements PaymentRepository {
 
     private final Cache<TokenKey, PaymentEntity> paymentCache;
 
@@ -22,16 +21,29 @@ public class CachePaymentRepository implements PaymentRepository{
 
     @Override
     public Payment load(ShopperId shopperId, TokenId tokenId) {
-        throw new UnsupportedOperationException();
+        TokenKey key = new TokenKey(shopperId.value, tokenId.value);
+        Event event = new UseTokenEvent("loadPayment", key.getOwnerId(), key.getTokenId(), SegmentService.getSegment(paymentCache, key));
+        event.begin();
+        try {
+            PaymentEntity entity = paymentCache.get(key);
+            return new Payment(new StoreId(entity.getStoreId()), shopperId, tokenId, new Money(entity.getBillingAmount()), LocalDateTime.ofEpochSecond(entity.getBillingDateTime(), 0, ZoneOffset.of("+09:00")));
+        } finally {
+            event.commit();
+        }
     }
 
     @Override
     public void store(Payment payment) {
         TokenKey tokenKey = new TokenKey(payment.getShopperId().value, payment.getTokenId().value);
         PaymentEntity paymentEntity = new PaymentEntity(payment.getStoreId().value, payment.getBillingAmount().value, payment.getBillingDateTime().toEpochSecond(ZoneOffset.of("+09:00")));
-        Event event = new CacheUseEvent(SegmentService.getSegment(paymentCache, tokenKey), "storePayment");
+
+        Event event = new UseTokenEvent("storePayment", tokenKey.getOwnerId(), tokenKey.getTokenId(), SegmentService.getSegment(paymentCache, tokenKey));
         event.begin();
-        paymentCache.put(tokenKey, paymentEntity);
-        event.commit();
+
+        try {
+            paymentCache.put(tokenKey, paymentEntity);
+        } finally {
+            event.commit();
+        }
     }
 }

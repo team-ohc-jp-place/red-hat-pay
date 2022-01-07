@@ -2,15 +2,15 @@ package rhpay.payment.repository;
 
 import jdk.jfr.Event;
 import org.infinispan.Cache;
-import rhpay.monitoring.CacheUseEvent;
 import rhpay.monitoring.SegmentService;
+import rhpay.monitoring.UseShopperEvent;
 import rhpay.payment.cache.ShopperEntity;
 import rhpay.payment.cache.ShopperKey;
 import rhpay.payment.domain.FullName;
 import rhpay.payment.domain.Shopper;
 import rhpay.payment.domain.ShopperId;
 
-public class CacheShopperRepository implements ShopperRepository{
+public class CacheShopperRepository implements ShopperRepository {
 
     private final Cache<ShopperKey, ShopperEntity> shopperCache;
 
@@ -21,10 +21,16 @@ public class CacheShopperRepository implements ShopperRepository{
     @Override
     public Shopper load(ShopperId id) {
         ShopperKey key = new ShopperKey(id.value);
-        Event event = new CacheUseEvent(SegmentService.getSegment(shopperCache, key), "loadShopper");
+
+        Event event = new UseShopperEvent("loadShopper", id.value, SegmentService.getSegment(shopperCache, key));
         event.begin();
-        ShopperEntity shopperEntity = shopperCache.get(key);
-        event.commit();
-        return new Shopper(id, new FullName(shopperEntity.getName()));
+
+        try {
+            ShopperEntity shopperEntity = shopperCache.get(key);
+            return new Shopper(id, new FullName(shopperEntity.getName()));
+
+        } finally {
+            event.commit();
+        }
     }
 }

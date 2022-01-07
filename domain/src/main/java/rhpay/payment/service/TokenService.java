@@ -24,24 +24,7 @@ public class TokenService {
         return tokenRepository.load(shopperId, tokenId);
     }
 
-    public Token processing(Token token) throws TokenException{
-        if(token.getStatus().equals(TokenStatus.UNUSED)) {
-            return tokenRepository.processing(token);
-        } else {
-            throw new TokenException(String.format("Attempted to change status of tokens to 'processing' even though it is '%s' : [%s, %s]", token.getStatus().name, token.getShopperId(), token.getTokenId()));
-        }
+    public void store(Token token) throws TokenException{
+        tokenRepository.store(token);
     }
-
-    public Token used(Token token) throws TokenException{
-        if(token.getStatus().equals(TokenStatus.PROCESSING)){
-        return tokenRepository.used(token);
-        } else {
-            throw new TokenException(String.format("Attempted to change status of tokens to 'used' even though it is '%s' : [%s, %s]", token.getStatus().name, token.getShopperId(), token.getTokenId()));
-        }
-    }
-
-    public Token failed(Token token) throws TokenException{
-        return tokenRepository.failed(token);
-    }
-
 }

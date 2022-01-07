@@ -70,9 +70,15 @@ public class PaymentResource {
             // 請求する内容を作成
             Billing bill = store.createBill(amount);
 
-            // トークンを読み込んで処理中にする
+            // トークンを読み込む
             token = tokenService.load(shopperId, tokenId);
-            token = tokenService.processing(token);
+            if (token == null) {
+                throw new RuntimeException(String.format("This token is not exist : [%s, %s]", shopperId, tokenId));
+            }
+
+            // トークンを処理中にする
+            token = token.processing();
+            tokenService.store(token);
 
             // 請求処理
             Payment payment = wallet.pay(bill, tokenId);
@@ -81,7 +87,8 @@ public class PaymentResource {
             walletService.store(wallet);
 
             // トークンを使用済みにする
-            token = tokenService.used(token);
+            token = token.used();
+            tokenService.store(token);
 
             // 支払い結果を格納する
             paymentService.store(payment);
@@ -102,10 +109,13 @@ public class PaymentResource {
             return res;
         } catch (Exception e) {
             PaymentException thrw = new PaymentException("Fail to pay");
-            if (token == null) {
-                thrw = new PaymentException(String.format("This token is not exist : [%s, %s]", shopperId, tokenId));
-            } else {
-                tokenService.failed(token);
+            if (token != null) {
+                try {
+                    token.failed();
+                    tokenService.store(token);
+                } catch (Exception e1) {
+                    thrw.addSuppressed(e1);
+                }
             }
             thrw.addSuppressed(e);
             thrw.printStackTrace();

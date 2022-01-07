@@ -1,35 +1,46 @@
 package rhpay.payment.repository;
 
-import rhpay.payment.cache.PaymentResponse;
+import io.quarkus.infinispan.client.Remote;
+import jdk.jfr.Event;
+import org.infinispan.client.hotrod.RemoteCache;
+import rhpay.monitoring.TokenRepositoryEvent;
+import rhpay.monitoring.TracerService;
 import rhpay.payment.cache.TokenEntity;
 import rhpay.payment.cache.TokenKey;
 import rhpay.payment.cache.TokenStatus;
-import rhpay.monitoring.MonitorRepository;
-import io.quarkus.infinispan.client.Remote;
-import org.infinispan.client.hotrod.RemoteCache;
-import rhpay.payment.domain.*;
-import rhpay.payment.repository.TokenRepository;
+import rhpay.payment.domain.ShopperId;
+import rhpay.payment.domain.Token;
+import rhpay.payment.domain.TokenId;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.HashMap;
-import java.util.Map;
 
 @RequestScoped
-@MonitorRepository
 public class CacheTokenRepository implements TokenRepository {
 
     @Inject
     @Remote("token")
     RemoteCache<TokenKey, TokenEntity> tokenCache;
 
+    @Inject
+    TracerService tracerService;
+
     @Override
     public void create(Token token) {
+        String traceId = tracerService.traceRepository();
 
-        TokenKey key = new TokenKey(token.getShopperId().value, token.getTokenId().value);
-        tokenCache.put(key, new TokenEntity(TokenStatus.UNUSED));
+        Event event = new TokenRepositoryEvent(traceId, "notify", token.getShopperId().value, token.getTokenId().value);
+        event.begin();
+
+        try {
+
+            TokenKey key = new TokenKey(token.getShopperId().value, token.getTokenId().value);
+            tokenCache.put(key, new TokenEntity(TokenStatus.UNUSED));
+
+        } finally {
+            event.commit();
+            tracerService.closeTrace();
+        }
     }
 
     @Override
@@ -39,19 +50,8 @@ public class CacheTokenRepository implements TokenRepository {
     }
 
     @Override
-    public Token processing(Token token) {
-        throw new UnsupportedOperationException("In this application, token is not used. Instead, it is delegated data grid.");
+    public void store(Token token) {
+        TokenKey key = new TokenKey(token.getShopperId().value, token.getTokenId().value);
+        tokenCache.put(key, new TokenEntity(TokenStatus.fromDomain(token.getStatus())));
     }
-
-    @Override
-    public Token used(Token token) {
-        throw new UnsupportedOperationException("In this application, token is not used. Instead, it is delegated data grid.");
-    }
-
-    @Override
-    public Token failed(Token token) {
-        throw new UnsupportedOperationException("In this application, token is not used. Instead, it is delegated data grid.");
-    }
-
-
 }

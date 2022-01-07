@@ -10,6 +10,6 @@ import rhpay.monolith.entity.TokenKey;
 public interface TokenEntityRepository extends JpaRepository<TokenEntity, TokenKey>, TokenEntityRepositoryCustom {
 
     @Modifying
-    @Query("UPDATE TokenEntity t SET t.status = :newStatus WHERE t.id.ownerId = :shopperId AND t.id.tokenId = :tokenId AND t.status = :currentStatus")
-    int updateStatus(@Param("shopperId") Integer shopperId, @Param("tokenId") String tokenId, @Param("currentStatus") int currentStatus, @Param("newStatus") int newStatus);
+    @Query("UPDATE TokenEntity t SET t.status = :newStatus WHERE t.id.ownerId = :shopperId AND t.id.tokenId = :tokenId")
+    int updateStatus(@Param("shopperId") Integer shopperId, @Param("tokenId") String tokenId, @Param("currentStatus") int currentStatus);
 }

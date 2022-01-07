@@ -1,9 +1,10 @@
 package rhpay.payment.rest;
 
-import rhpay.monitoring.MonitorRest;
 import io.quarkus.qute.Template;
 import io.smallrye.mutiny.Uni;
 import org.eclipse.microprofile.opentracing.Traced;
+import rhpay.monitoring.TokenRestEvent;
+import rhpay.monitoring.TracerService;
 import rhpay.payment.domain.*;
 import rhpay.payment.repository.*;
 import rhpay.payment.service.*;
@@ -14,7 +15,6 @@ import javax.ws.rs.core.MediaType;
 
 @Path("/")
 @Traced
-@MonitorRest
 public class PaymentResource {
 
     @Inject
@@ -38,14 +38,33 @@ public class PaymentResource {
     @Inject
     DelegateRepository delegateRepository;
 
+    @Inject
+    TracerService tracerService;
+
     @POST
     @Path("/pay/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
     public Uni<TokenResponse> createTokenAPI(@PathParam("userId") final int userId) {
+
         TokenService tokenService = new TokenService(tokenRepository);
-        Token token = tokenService.create(new ShopperId(userId));
-        TokenResponse res = new TokenResponse(token.getShopperId().value, token.getTokenId().value, token.getStatus());
-        return Uni.createFrom().item(res);
+
+        String traceId = tracerService.traceRest();
+        TokenRestEvent event = new TokenRestEvent(traceId, "createTokenAPI", userId);
+        event.begin();
+
+        try {
+
+            Token token = tokenService.create(new ShopperId(userId));
+
+            event.setTokenId(token.getTokenId().value);
+
+            TokenResponse res = new TokenResponse(token.getShopperId().value, token.getTokenId().value, token.getStatus());
+            return Uni.createFrom().item(res);
+
+        } finally {
+            event.commit();
+        }
+
     }
 
     @POST
@@ -56,17 +75,25 @@ public class PaymentResource {
         NotifyService paymentService = new NotifyService(notifyRepository);
         CoffeeStoreService coffeeStoreService = new CoffeeStoreService(coffeeStoreRepository);
 
-        //TODO: いつかはDBから取るようにしたい
-        CoffeeStore store = coffeeStoreService.load(new StoreId(storeId));
+        String traceId = tracerService.traceRest();
+        TokenRestEvent event = new TokenRestEvent(traceId, "pay", userId, tokenId);
+        event.begin();
 
         try {
+            //TODO: いつかはDBから取るようにしたい
+            CoffeeStore store = coffeeStoreService.load(new StoreId(storeId));
+
             Payment payment = delegateService.invoke(new ShopperId(userId), new TokenId(tokenId), store, new Money(amount));
             paymentService.notify(payment);
             PaymentResponse res = new PaymentResponse(payment.getStoreId().value, payment.getShopperId().value, payment.getTokenId().value, payment.getBillingAmount().value, payment.getBillingDateTime());
             return Uni.createFrom().item(res);
+
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
+
+        } finally {
+            event.commit();
         }
     }
 

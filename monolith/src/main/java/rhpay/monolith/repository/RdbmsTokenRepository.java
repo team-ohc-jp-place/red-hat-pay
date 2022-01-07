@@ -5,10 +5,7 @@ import org.springframework.web.context.annotation.RequestScope;
 import rhpay.monolith.entity.TokenEntity;
 import rhpay.monolith.entity.TokenKey;
 import rhpay.monolith.repository.spring.TokenEntityRepository;
-import rhpay.payment.domain.ShopperId;
-import rhpay.payment.domain.Token;
-import rhpay.payment.domain.TokenId;
-import rhpay.payment.domain.TokenStatus;
+import rhpay.payment.domain.*;
 import rhpay.payment.repository.TokenRepository;
 
 @RequestScope
@@ -35,37 +32,12 @@ public class RdbmsTokenRepository implements TokenRepository {
     }
 
     @Override
-    public Token processing(Token token) {
-        int rowNum = tokenSpringRepository.updateStatus(token.getShopperId().value, token.getTokenId().value, token.getStatus().value, TokenStatus.PROCESSING.value);
+    public void store(Token token) throws TokenException {
+        int rowNum = tokenSpringRepository.updateStatus(token.getShopperId().value, token.getTokenId().value, token.getStatus().value);
         if (rowNum == 0) {
             throw new RuntimeException(String.format("This token is not exist on Data Store: %s", token));
         } else if (rowNum == 1) {
-            Token newToken = new Token(token.getShopperId(), token.getTokenId(), rhpay.payment.domain.TokenStatus.PROCESSING);
-            return newToken;
-        }
-        throw new RuntimeException(String.format("Many token were changed : %s", token));
-    }
-
-    @Override
-    public Token used(Token token) {
-        int rowNum = tokenSpringRepository.updateStatus(token.getShopperId().value, token.getTokenId().value, token.getStatus().value, TokenStatus.USED.value);
-        if (rowNum == 0) {
-            throw new RuntimeException(String.format("This token is not exist on Data Store: %s", token));
-        } else if (rowNum == 1) {
-            Token newToken = new Token(token.getShopperId(), token.getTokenId(), rhpay.payment.domain.TokenStatus.USED);
-            return newToken;
-        }
-        throw new RuntimeException(String.format("Many token were changed : %s", token));
-    }
-
-    @Override
-    public Token failed(Token token) {
-        int rowNum = tokenSpringRepository.updateStatus(token.getShopperId().value, token.getTokenId().value, token.getStatus().value, TokenStatus.FAILED.value);
-        if (rowNum == 0) {
-            throw new RuntimeException(String.format("This token is not exist on Data Store: %s", token));
-        } else if (rowNum == 1) {
-            Token newToken = new Token(token.getShopperId(), token.getTokenId(), rhpay.payment.domain.TokenStatus.FAILED);
-            return newToken;
+            return;
         }
         throw new RuntimeException(String.format("Many token were changed : %s", token));
     }

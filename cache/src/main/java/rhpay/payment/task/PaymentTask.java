@@ -5,12 +5,19 @@ import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.tasks.ServerTask;
 import org.infinispan.tasks.TaskContext;
-import rhpay.monitoring.CacheUseEvent;
 import rhpay.monitoring.CallDistributedTaskEvent;
 import rhpay.monitoring.SegmentService;
 import rhpay.monitoring.TaskEvent;
-import rhpay.payment.cache.*;
+import rhpay.payment.cache.PaymentResponse;
+import rhpay.payment.cache.ShopperKey;
+import rhpay.payment.cache.WalletEntity;
+import rhpay.payment.domain.Payment;
+import rhpay.payment.domain.ShopperId;
+import rhpay.payment.domain.TokenId;
+import rhpay.payment.repository.CachePaymentRepository;
+import rhpay.payment.service.PaymentService;
 
+import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.Set;
 
@@ -55,32 +62,25 @@ public class PaymentTask implements ServerTask<PaymentResponse> {
         try {
             // データのあるところで処理を実行する
             ShopperKey key = new ShopperKey(parameter.shopperId);
-            PaymentFunction paymentFunction = new PaymentFunction(shopperId, tokenId, amount, storeId, storeName);
+            PaymentFunction paymentFunction = new PaymentFunction(shopperId, tokenId, amount, storeId, storeName, traceId);
             Cache<ShopperKey, WalletEntity> walletCache = parameter.cache;
             CacheStream cacheStream = walletCache.entrySet().stream();
+
+            // Distributed Streamを呼び出す側の記録
             Event distributedTaskEvent = new CallDistributedTaskEvent(SegmentService.getSegment(walletCache, key), "paymentFunction");
+            distributedTaskEvent.begin();
 
             try {
-                distributedTaskEvent.begin();
                 cacheStream.filterKeys(Set.of(key)).forEach(paymentFunction);
             } finally {
                 distributedTaskEvent.commit();
             }
 
             // 処理の結果を取得する
-            Cache<TokenKey, PaymentEntity> paymentCache = walletCache.getCacheManager().getCache("payment");
-            TokenKey tokenKey = new TokenKey(shopperId, tokenId);
-            Event cacheUseEvent = new CacheUseEvent(SegmentService.getSegment(paymentCache, key), "getPayment");
-            try {
-                cacheUseEvent.begin();
-                PaymentEntity paymentEntity = paymentCache.get(tokenKey);
-                cacheUseEvent.commit();
-                return new PaymentResponse(storeId, shopperId, tokenId, paymentEntity.getBillingAmount(), paymentEntity.getBillingDateTime());
-            } finally {
-                if(cacheUseEvent.shouldCommit()) {
-                    cacheUseEvent.commit();
-                }
-            }
+            PaymentService paymentService = new PaymentService(new CachePaymentRepository(walletCache.getCacheManager().getCache("payment")));
+            Payment payment = paymentService.load(new ShopperId(shopperId), new TokenId(tokenId));
+            return new PaymentResponse(storeId, shopperId, tokenId, payment.getBillingAmount().value, payment.getBillingDateTime().toEpochSecond(ZoneOffset.of("+09:00")));
+
         } finally {
             taskEvent.commit();
         }

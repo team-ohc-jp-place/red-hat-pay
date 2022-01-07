@@ -5,18 +5,19 @@ import io.quarkus.qute.Template;
 import io.smallrye.mutiny.Uni;
 import org.eclipse.microprofile.opentracing.Traced;
 import org.infinispan.client.hotrod.RemoteCache;
-import rhpay.monitoring.MonitorRest;
 import rhpay.payment.cache.*;
 
 import javax.inject.Inject;
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.HashMap;
 import java.util.Map;
 
 @Path("/")
 @Traced
-@MonitorRest
 public class InitializeResource {
 
     @Inject

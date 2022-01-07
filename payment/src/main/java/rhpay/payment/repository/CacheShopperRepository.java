@@ -1,20 +1,17 @@
 package rhpay.payment.repository;
 
+import io.quarkus.infinispan.client.Remote;
+import org.infinispan.client.hotrod.RemoteCache;
+import rhpay.payment.cache.ShopperEntity;
+import rhpay.payment.cache.ShopperKey;
 import rhpay.payment.domain.FullName;
 import rhpay.payment.domain.Shopper;
 import rhpay.payment.domain.ShopperId;
-import rhpay.payment.cache.ShopperEntity;
-import rhpay.payment.cache.ShopperKey;
-import rhpay.monitoring.MonitorRepository;
-import io.quarkus.infinispan.client.Remote;
-import org.infinispan.client.hotrod.RemoteCache;
-import rhpay.payment.repository.ShopperRepository;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
 @RequestScoped
-@MonitorRepository
 public class CacheShopperRepository implements ShopperRepository {
 
     @Inject

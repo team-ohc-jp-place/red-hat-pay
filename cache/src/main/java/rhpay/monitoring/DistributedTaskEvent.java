@@ -17,9 +17,13 @@ public class DistributedTaskEvent extends Event {
     @Label("tokenId")
     private final String tokenId;
 
-    public DistributedTaskEvent(String taskName, int shopperId, String tokenId) {
+    @Label("traceId")
+    private final String traceId;
+
+    public DistributedTaskEvent(String taskName, int shopperId, String tokenId, String traceId) {
         this.taskName = taskName;
         this.shopperId = shopperId;
         this.tokenId = tokenId;
+        this.traceId = traceId;
     }
 }

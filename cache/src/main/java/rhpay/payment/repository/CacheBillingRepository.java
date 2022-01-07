@@ -1,19 +1,18 @@
 package rhpay.payment.repository;
 
 import jdk.jfr.Event;
-import org.infinispan.Cache;
-import org.infinispan.context.Flag;
-import rhpay.monitoring.CacheUseEvent;
+import org.infinispan.AdvancedCache;
 import rhpay.monitoring.SegmentService;
+import rhpay.monitoring.UseShopperEvent;
 import rhpay.payment.cache.ShopperKey;
 import rhpay.payment.cache.WalletEntity;
 import rhpay.payment.domain.*;
 
 public class CacheBillingRepository implements BillingRepository {
 
-    private final Cache<ShopperKey, WalletEntity> walletCache;
+    private final AdvancedCache<ShopperKey, WalletEntity> walletCache;
 
-    public CacheBillingRepository(Cache<ShopperKey, WalletEntity> walletCache) {
+    public CacheBillingRepository(AdvancedCache<ShopperKey, WalletEntity> walletCache) {
         this.walletCache = walletCache;
     }
 
@@ -23,18 +22,36 @@ public class CacheBillingRepository implements BillingRepository {
         final ShopperKey shopperKey = new ShopperKey(shopper.getId().value);
 
         // 書込み用のロックを取りつつ取得する
-        Event loadEvent = new CacheUseEvent(SegmentService.getSegment(walletCache, shopperKey), "loadWallet");
+        Event loadEvent = new UseShopperEvent("loadWallet", shopperKey.getOwnerId(), SegmentService.getSegment(walletCache, shopperKey));
         loadEvent.begin();
-        WalletEntity cachedWallet = walletCache.getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK).get(shopperKey);
-        loadEvent.commit();
 
+        WalletEntity cachedWallet = null;
+        try {
+            cachedWallet = walletCache.get(shopperKey);
+            if(cachedWallet == null){
+                throw new PaymentException(String.format("Wallet is not cached [shopperId=%d]", shopperKey.getOwnerId()));
+            }
+        }catch(Exception e){
+            throw new PaymentException(String.format("Could not load wallet [shopperId=%d]", shopperKey.getOwnerId()));
+        }finally {
+            loadEvent.commit();
+        }
+
+        // 業務処理を実行
         Wallet wallet = new Wallet(shopper, new Money(cachedWallet.getChargedMoney()), new Money(cachedWallet.getAutoChargeMoney()));
         Payment payment = wallet.pay(bill, tokenId);
 
-        Event storeEvent = new CacheUseEvent(SegmentService.getSegment(walletCache, shopperKey), "storeWallet");
+        // 保存する
+        Event storeEvent = new UseShopperEvent("storeWallet", shopperKey.getOwnerId(), SegmentService.getSegment(walletCache, shopperKey));
         storeEvent.begin();
-        walletCache.put(shopperKey, new WalletEntity(wallet.getChargedMoney().value, wallet.getAutoChargeMoney().value));
-        storeEvent.commit();
+
+        try {
+            walletCache.put(shopperKey, new WalletEntity(wallet.getChargedMoney().value, wallet.getAutoChargeMoney().value));
+        }catch(Exception e){
+            throw new PaymentException(String.format("Could not store wallet [shopperId=%d]", shopperKey.getOwnerId()));
+        }finally {
+            storeEvent.commit();
+        }
 
         return payment;
     }

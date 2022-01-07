@@ -7,9 +7,5 @@ public interface TokenRepository {
 
     Token load(ShopperId shopperId, TokenId tokenId) throws TokenException;
 
-    Token processing(Token token) throws TokenException;
-
-    Token used(Token token) throws TokenException;
-
-    Token failed(Token token) throws TokenException;
+    void store(Token token) throws TokenException;
 }
