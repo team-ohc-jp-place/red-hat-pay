@@ -5,6 +5,7 @@
 - Red Hat OpenShift distributed tracing platform
 - Kiali Operator
 - Red Hat OpenShift Service Mesh
+- Red Hat OpenShift Logging (stable-5.2)
 
 # 初期処理
 ```shell
