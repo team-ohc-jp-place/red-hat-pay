@@ -4,7 +4,7 @@ import rhpay.payment.domain.*;
 import rhpay.point.PointAddService;
 import rhpay.point.cache.PointEntity;
 import rhpay.payment.cache.ShopperKey;
-import rhpay.monitoring.TaskEvent;
+import rhpay.monitoring.event.TaskEvent;
 import rhpay.point.domain.Point;
 import rhpay.point.repository.CachePointRepository;
 import rhpay.point.repository.PoindAddRepository;

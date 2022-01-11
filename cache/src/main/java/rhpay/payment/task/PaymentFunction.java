@@ -9,7 +9,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.util.function.SerializableBiConsumer;
-import rhpay.monitoring.DistributedTaskEvent;
+import rhpay.monitoring.event.DistributedTaskEvent;
 import rhpay.monitoring.EntryListener;
 import rhpay.monitoring.TransactionListener;
 import rhpay.payment.cache.*;

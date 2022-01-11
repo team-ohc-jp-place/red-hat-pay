@@ -1,13 +1,9 @@
 package rhpay.point.repository;
 
 import rhpay.payment.domain.Money;
-import rhpay.payment.domain.Payment;
 import rhpay.payment.domain.ShopperId;
 import rhpay.point.domain.Point;
-import jdk.jfr.Event;
 import org.infinispan.Cache;
-import org.infinispan.util.function.SerializableBiFunction;
-import rhpay.monitoring.ShopperFunctionEvent;
 import rhpay.payment.cache.ShopperKey;
 import rhpay.point.cache.PointEntity;
 import rhpay.point.repository.function.PointAddFunction;

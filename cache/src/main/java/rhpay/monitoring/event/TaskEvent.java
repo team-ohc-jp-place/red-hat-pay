@@ -1,4 +1,4 @@
-package rhpay.monitoring;
+package rhpay.monitoring.event;
 
 import jdk.jfr.Category;
 import jdk.jfr.Event;

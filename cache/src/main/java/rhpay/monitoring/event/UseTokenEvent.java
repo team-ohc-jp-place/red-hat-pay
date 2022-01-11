@@ -1,12 +1,12 @@
-package rhpay.monitoring;
+package rhpay.monitoring.event;
 
 import jdk.jfr.Category;
 import jdk.jfr.Event;
 import jdk.jfr.Label;
 
-@Label("UseShopperEvent")
+@Label("UseTokenEvent")
 @Category({"RedHatPay", "DataGrid", "access"})
-public class UseShopperEvent extends Event {
+public class UseTokenEvent extends Event {
 
     @Label("doing")
     private final String doing;
@@ -14,12 +14,16 @@ public class UseShopperEvent extends Event {
     @Label("shopperId")
     private final int shopperId;
 
+    @Label("tokenId")
+    private final String tokenId;
+
     @Label("segment")
     private final int segment;
 
-    public UseShopperEvent(String doing, int shopperId, int segment) {
+    public UseTokenEvent(String doing, int shopperId, String tokenId, int segment) {
         this.doing = doing;
         this.shopperId = shopperId;
+        this.tokenId = tokenId;
         this.segment = segment;
     }
 }

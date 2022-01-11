@@ -3,7 +3,7 @@ package rhpay.payment.repository;
 import jdk.jfr.Event;
 import org.infinispan.Cache;
 import rhpay.monitoring.SegmentService;
-import rhpay.monitoring.UseTokenEvent;
+import rhpay.monitoring.event.UseTokenEvent;
 import rhpay.payment.cache.PaymentEntity;
 import rhpay.payment.cache.TokenKey;
 import rhpay.payment.domain.*;

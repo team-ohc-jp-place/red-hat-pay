@@ -5,6 +5,7 @@ import io.opentracing.Tracer;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import java.util.UUID;
 
 @RequestScoped
 public class TracerService {
@@ -13,32 +14,53 @@ public class TracerService {
     Tracer tracer;
 
     public String traceRest() {
+
+        String traceId = null;
         if (tracer != null) {
             Span activeSpan = tracer.activeSpan();
+
 
             if (activeSpan == null) {
                 Span builtSpan = tracer.buildSpan("REST").start();
                 tracer.activateSpan(builtSpan);
-                return builtSpan.context().toTraceId();
+                traceId = builtSpan.context().toTraceId();
 
             } else {
-                return activeSpan.context().toTraceId();
+                traceId = activeSpan.context().toTraceId();
             }
         }
-        return "";
+
+        if (traceId != null && !traceId.trim().equals("")) {
+            return traceId;
+        }
+        return "REST:" + UUID.randomUUID();
     }
 
     public String traceRepository() {
+        String traceId = null;
         if (tracer != null) {
-            Span builtSpan = tracer.buildSpan("Repository").start();
-            tracer.activateSpan(builtSpan);
-            return builtSpan.context().toTraceId();
+            Span activeSpan = tracer.activeSpan();
+
+
+            if (activeSpan == null) {
+                Span builtSpan = tracer.buildSpan("REST").start();
+                tracer.activateSpan(builtSpan);
+                traceId = builtSpan.context().toTraceId();
+
+            } else {
+                traceId = activeSpan.context().toTraceId();
+            }
         }
-        return "";
+
+        if (traceId != null && !traceId.trim().equals("")) {
+            return traceId;
+        }
+        return "payment:" + UUID.randomUUID();
+
     }
 
-    public void closeTrace(){
-        if(tracer != null){
+    public void closeTrace() {
+        if (tracer != null) {
             tracer.activeSpan().finish();
         }
     }

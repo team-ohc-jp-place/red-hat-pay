@@ -3,7 +3,7 @@ package rhpay.payment.repository;
 import jdk.jfr.Event;
 import org.infinispan.AdvancedCache;
 import rhpay.monitoring.SegmentService;
-import rhpay.monitoring.UseShopperEvent;
+import rhpay.monitoring.event.UseShopperEvent;
 import rhpay.payment.cache.ShopperKey;
 import rhpay.payment.cache.WalletEntity;
 import rhpay.payment.domain.*;

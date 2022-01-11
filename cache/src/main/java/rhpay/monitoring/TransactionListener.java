@@ -7,6 +7,8 @@ import org.infinispan.notifications.cachelistener.annotation.TransactionRegister
 import org.infinispan.notifications.cachelistener.event.TransactionCompletedEvent;
 import org.infinispan.notifications.cachelistener.event.TransactionRegisteredEvent;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import rhpay.monitoring.event.TransactionCompletedJfrEvent;
+import rhpay.monitoring.event.TransactionRegisteredJfrEvent;
 
 @Listener
 public class TransactionListener {

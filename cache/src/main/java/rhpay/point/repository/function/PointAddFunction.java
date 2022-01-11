@@ -4,7 +4,7 @@ import jdk.jfr.Event;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.util.function.SerializableBiFunction;
-import rhpay.monitoring.ShopperFunctionEvent;
+import rhpay.monitoring.event.ShopperFunctionEvent;
 import rhpay.payment.cache.ShopperKey;
 import rhpay.payment.domain.Money;
 import rhpay.payment.domain.ShopperId;
