@@ -30,7 +30,7 @@ public class InitialProcess {
             "<distributed-cache name=\"%s\">"
                     + " <encoding media-type=\"application/x-protostream\"/>"
                     + " <groups enabled=\"true\"/>"
-                    + " <locking acquire-timeout=\"15000\" striping=\"false\"/>"
+                    + " <locking acquire-timeout=\"10\" striping=\"false\"/>"
                     + " <transaction mode=\"BATCH\" locking=\"PESSIMISTIC\"/>"
                     + " <memory max-count=\"100000\" when-full=\"REMOVE\"/>"
                     + "</distributed-cache>";
@@ -39,7 +39,7 @@ public class InitialProcess {
             "<distributed-cache name=\"%s\">"
                     + " <encoding media-type=\"application/x-protostream\"/>"
                     + " <groups enabled=\"true\"/>"
-                    + " <locking acquire-timeout=\"15000\" striping=\"false\"/>"
+                    + " <locking acquire-timeout=\"10\" striping=\"false\"/>"
                     + " <transaction mode=\"BATCH\" locking=\"PESSIMISTIC\"/>"
                     + "</distributed-cache>";
 

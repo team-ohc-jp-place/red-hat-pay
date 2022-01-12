@@ -20,10 +20,14 @@ public class DistributedTaskEvent extends Event {
     @Label("traceId")
     private final String traceId;
 
-    public DistributedTaskEvent(String taskName, int shopperId, String tokenId, String traceId) {
+    @Label("tryCount")
+    private final int tryCount;
+
+    public DistributedTaskEvent(String taskName, int shopperId, String tokenId, String traceId, int tryCount) {
         this.taskName = taskName;
         this.shopperId = shopperId;
         this.tokenId = tokenId;
         this.traceId = traceId;
+        this.tryCount = tryCount;
     }
 }
