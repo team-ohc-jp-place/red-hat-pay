@@ -14,14 +14,8 @@ import rhpay.monitoring.EntryListener;
 import rhpay.monitoring.TransactionListener;
 import rhpay.payment.cache.*;
 import rhpay.payment.domain.*;
-import rhpay.payment.repository.CacheBillingRepository;
-import rhpay.payment.repository.CachePaymentRepository;
-import rhpay.payment.repository.CacheShopperRepository;
-import rhpay.payment.repository.CacheTokenRepository;
-import rhpay.payment.service.BillingService;
-import rhpay.payment.service.PaymentService;
-import rhpay.payment.service.ShopperService;
-import rhpay.payment.service.TokenService;
+import rhpay.payment.repository.*;
+import rhpay.payment.service.*;
 
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
@@ -75,7 +69,7 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
 
         TransactionManager transactionManager = walletCache.getAdvancedCache().getTransactionManager();
 
-        BillingService billingService = new BillingService(new CacheBillingRepository(advancedWalletCache));
+        WalletService walletService = new WalletService(new CacheWalletRepository(advancedWalletCache));
         ShopperService shopperService = new ShopperService(new CacheShopperRepository(shopperCache));
         TokenService tokenService = new TokenService(new CacheTokenRepository(advancedTokenCache));
         PaymentService paymentService = new PaymentService(new CachePaymentRepository(paymentCache));
@@ -112,7 +106,9 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
             tokenService.store(token);
 
             // 請求処理
-            final Payment payment = billingService.bill(shopper, tokenId, bill);
+            Wallet wallet = walletService.load(shopper);
+            Payment payment = wallet.pay(bill, tokenId);
+            walletService.store(wallet);
 
             // トークンを使用済みにする
             token = token.used();

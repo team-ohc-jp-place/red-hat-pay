@@ -6,17 +6,20 @@ import rhpay.monitoring.SegmentService;
 import rhpay.monitoring.event.UseShopperEvent;
 import rhpay.payment.cache.ShopperKey;
 import rhpay.payment.cache.WalletEntity;
-import rhpay.payment.domain.*;
+import rhpay.payment.domain.Money;
+import rhpay.payment.domain.Shopper;
+import rhpay.payment.domain.Wallet;
 
-public class CacheBillingRepository implements BillingRepository {
+public class CacheWalletRepository implements WalletRepository{
 
     private final AdvancedCache<ShopperKey, WalletEntity> walletCache;
 
-    public CacheBillingRepository(AdvancedCache<ShopperKey, WalletEntity> walletCache) {
+    public CacheWalletRepository(AdvancedCache<ShopperKey, WalletEntity> walletCache) {
         this.walletCache = walletCache;
     }
 
-    public Payment bill(Shopper shopper, TokenId tokenId, Billing bill) throws PaymentException {
+    @Override
+    public Wallet load(Shopper shopper) {
 
         // 財布の所有者のキーを作成
         final ShopperKey shopperKey = new ShopperKey(shopper.getId().value);
@@ -28,31 +31,26 @@ public class CacheBillingRepository implements BillingRepository {
         WalletEntity cachedWallet = null;
         try {
             cachedWallet = walletCache.get(shopperKey);
-            if(cachedWallet == null){
-                throw new PaymentException(String.format("Wallet is not cached [shopperId=%d]", shopperKey.getOwnerId()));
-            }
-        }catch(Exception e){
-            throw new PaymentException(String.format("Could not load wallet [shopperId=%d]", shopperKey.getOwnerId()));
         }finally {
             loadEvent.commit();
         }
 
-        // 業務処理を実行
-        Wallet wallet = new Wallet(shopper, new Money(cachedWallet.getChargedMoney()), new Money(cachedWallet.getAutoChargeMoney()));
-        Payment payment = wallet.pay(bill, tokenId);
+        return new Wallet(shopper, new Money(cachedWallet.getChargedMoney()), new Money(cachedWallet.getAutoChargeMoney()));
+    }
 
-        // 保存する
+    @Override
+    public void store(Wallet wallet) {
+
+        // 財布の所有者のキーを作成
+        final ShopperKey shopperKey = new ShopperKey(wallet.getOwner().getId().value);
+
         Event storeEvent = new UseShopperEvent("storeWallet", shopperKey.getOwnerId(), SegmentService.getSegment(walletCache, shopperKey));
         storeEvent.begin();
 
         try {
             walletCache.put(shopperKey, new WalletEntity(wallet.getChargedMoney().value, wallet.getAutoChargeMoney().value));
-        }catch(Exception e){
-            throw new PaymentException(String.format("Could not store wallet [shopperId=%d]", shopperKey.getOwnerId()));
         }finally {
             storeEvent.commit();
         }
-
-        return payment;
     }
 }
