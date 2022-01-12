@@ -39,7 +39,7 @@ public class InitializeResource {
     @Inject
     Template initialize;
 
-    private final int BATCH_ENTRY_NUM = 1000;
+    private final int BATCH_ENTRY_NUM = 5000;
 
     @GET
     @Path("/init/{userNum}/{amount}/{autoCharge}")

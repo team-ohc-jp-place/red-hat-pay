@@ -5,7 +5,7 @@ class MultiUserTaskSet(TaskSet):
 
     @task
     def loadtest(self):
-        user = str(random.randint(0, 100000) % 3000)
+        user = str(random.randint(0, 100000000) % 1000000)
         response1 = self.client.post("/pay/" + user)
         if response1.status_code != 200:
             print (response1)

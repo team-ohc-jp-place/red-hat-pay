@@ -1,10 +1,8 @@
 package rhpay.payment.system;
 
 import io.quarkus.runtime.StartupEvent;
-import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.commons.configuration.XMLStringConfiguration;
-import rhpay.payment.cache.*;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
@@ -28,13 +26,21 @@ public class InitialProcess {
                     + " <groups enabled=\"true\"/>"
                     + "</distributed-cache>";
 
+    private static final String TRANSACTIONAL_EXPIRED_CACHE_CONFIG =
+            "<distributed-cache name=\"%s\">"
+                    + " <encoding media-type=\"application/x-protostream\"/>"
+                    + " <groups enabled=\"true\"/>"
+                    + " <locking acquire-timeout=\"15000\" striping=\"false\"/>"
+                    + " <transaction mode=\"BATCH\" locking=\"PESSIMISTIC\"/>"
+                    + " <memory max-count=\"100000\" when-full=\"REMOVE\"/>"
+                    + "</distributed-cache>";
+
     private static final String TRANSACTIONAL_CACHE_CONFIG =
             "<distributed-cache name=\"%s\">"
                     + " <encoding media-type=\"application/x-protostream\"/>"
                     + " <groups enabled=\"true\"/>"
-                    + " <locking concurrency-level=\"1000\" acquire-timeout=\"15000\" striping=\"false\"/>"
+                    + " <locking acquire-timeout=\"15000\" striping=\"false\"/>"
                     + " <transaction mode=\"BATCH\" locking=\"PESSIMISTIC\"/>"
-                    + " <memory max-count=\"100000\" when-full=\"REMOVE\"/>"
                     + "</distributed-cache>";
 
     void onStart(@Observes StartupEvent ev) {
@@ -48,11 +54,11 @@ public class InitialProcess {
             System.out.println("wallet cache was created");
         }
         if (!cacheNames.contains("token")) {
-            cacheManager.administration().getOrCreateCache("token", new XMLStringConfiguration(String.format(TRANSACTIONAL_CACHE_CONFIG, "token")));
+            cacheManager.administration().getOrCreateCache("token", new XMLStringConfiguration(String.format(TRANSACTIONAL_EXPIRED_CACHE_CONFIG, "token")));
             System.out.println("token cache was created");
         }
         if (!cacheNames.contains("payment")) {
-            cacheManager.administration().getOrCreateCache("payment", new XMLStringConfiguration(String.format(TRANSACTIONAL_CACHE_CONFIG, "payment")));
+            cacheManager.administration().getOrCreateCache("payment", new XMLStringConfiguration(String.format(TRANSACTIONAL_EXPIRED_CACHE_CONFIG, "payment")));
             System.out.println("payment cache was created");
         }
     }
