@@ -62,103 +62,112 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
 
     @Override
     public void accept(Cache<ShopperKey, WalletEntity> walletCache, ImmortalCacheEntry entry) {
-        EmbeddedCacheManager cacheManager = walletCache.getCacheManager();
-        AdvancedCache<TokenKey, TokenEntity> advancedTokenCache = cacheManager.<TokenKey, TokenEntity>getCache("token").getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK);
-        AdvancedCache<ShopperKey, WalletEntity> advancedWalletCache = walletCache.getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK);
-        Cache<TokenKey, PaymentEntity> paymentCache = cacheManager.getCache("payment");
-        Cache<ShopperKey, ShopperEntity> shopperCache = cacheManager.getCache("user");
+        try {
+            EmbeddedCacheManager cacheManager = walletCache.getCacheManager();
+            AdvancedCache<TokenKey, TokenEntity> advancedTokenCache = cacheManager.<TokenKey, TokenEntity>getCache("token").getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK);
+            AdvancedCache<ShopperKey, WalletEntity> advancedWalletCache = walletCache.getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK);
+            Cache<TokenKey, PaymentEntity> paymentCache = cacheManager.getCache("payment");
+            Cache<ShopperKey, ShopperEntity> shopperCache = cacheManager.getCache("user");
 
-        advancedTokenCache.addListener(EntryListener.getInstance());
-        advancedTokenCache.addListener(TransactionListener.getInstance());
-        advancedWalletCache.addListener(EntryListener.getInstance());
-        advancedWalletCache.addListener(TransactionListener.getInstance());
-        paymentCache.addListener(EntryListener.getInstance());
-        paymentCache.addListener(TransactionListener.getInstance());
-        shopperCache.addListener(EntryListener.getInstance());
-        shopperCache.addListener(TransactionListener.getInstance());
+            advancedTokenCache.addListener(EntryListener.getInstance());
+            advancedTokenCache.addListener(TransactionListener.getInstance());
+            advancedWalletCache.addListener(EntryListener.getInstance());
+            advancedWalletCache.addListener(TransactionListener.getInstance());
+            paymentCache.addListener(EntryListener.getInstance());
+            paymentCache.addListener(TransactionListener.getInstance());
+            shopperCache.addListener(EntryListener.getInstance());
+            shopperCache.addListener(TransactionListener.getInstance());
 
-        TransactionManager transactionManager = walletCache.getAdvancedCache().getTransactionManager();
+            TransactionManager transactionManager = walletCache.getAdvancedCache().getTransactionManager();
 
-        WalletService walletService = new WalletService(new CacheWalletRepository(advancedWalletCache));
-        ShopperService shopperService = new ShopperService(new CacheShopperRepository(shopperCache));
-        TokenService tokenService = new TokenService(new CacheTokenRepository(advancedTokenCache));
-        PaymentService paymentService = new PaymentService(new CachePaymentRepository(paymentCache));
+            WalletService walletService = new WalletService(new CacheWalletRepository(advancedWalletCache));
+            ShopperService shopperService = new ShopperService(new CacheShopperRepository(shopperCache));
+            TokenService tokenService = new TokenService(new CacheTokenRepository(advancedTokenCache));
+            PaymentService paymentService = new PaymentService(new CachePaymentRepository(paymentCache));
 
-        final ShopperId shopperId = new ShopperId(this.shopperId);
-        final TokenId tokenId = new TokenId(this.tokenId);
-        final Money amount = new Money(this.amount);
-        final StoreId storeId = new StoreId(this.storeId);
-        final StoreName storeName = new StoreName(this.storeName);
-        final CoffeeStore store = new CoffeeStore(storeId, storeName);
+            final ShopperId shopperId = new ShopperId(this.shopperId);
+            final TokenId tokenId = new TokenId(this.tokenId);
+            final Money amount = new Money(this.amount);
+            final StoreId storeId = new StoreId(this.storeId);
+            final StoreName storeName = new StoreName(this.storeName);
+            final CoffeeStore store = new CoffeeStore(storeId, storeName);
 
-        List<Exception> retryCauseList = null;
+            List<Exception> retryCauseList = null;
+            boolean success = false;
 
-        for (int tryCount = 1; tryCount <= MAX_RETRY_COUNT; tryCount++) {
+            for (int tryCount = 1; tryCount <= MAX_RETRY_COUNT; tryCount++) {
                 // Distributed Streamを実行している記録
                 Event taskEvent = new DistributedTaskEvent("PaymentTask", shopperId.value, tokenId.value, traceId, tryCount);
                 taskEvent.begin();
 
                 final Billing bill = store.createBill(amount);
 
-            try {
-                // トランザクションを開始する
-                transactionManager.begin();
-
-                // 買い物客の情報を読み込む
-                Shopper shopper = shopperService.load(shopperId);
-
-                // トークンを読み込む
-                Token token = tokenService.load(shopperId, tokenId);
-                if (token == null) {
-                    throw new RuntimeException(String.format("This token is not exist : [%s, %s]", shopperId, tokenId));
-                }
-
-                // トークンを処理中にする
-                token = token.processing();
-                tokenService.store(token);
-
-                // 請求処理
-                Wallet wallet = walletService.load(shopper);
-                Payment payment = wallet.pay(bill, tokenId);
-                walletService.store(wallet);
-
-                // トークンを使用済みにする
-                token = token.used();
-                tokenService.store(token);
-
-                // 支払い結果を格納する
-                paymentService.store(payment);
-
-                transactionManager.commit();
-
-            } catch (Exception e) {
-                if (tryCount == 1) {
-                    retryCauseList = new ArrayList(MAX_RETRY_COUNT);
-                }
-                retryCauseList.add(e);
                 try {
-                    transactionManager.rollback();
-                } catch (SystemException ex) {
-                    e.addSuppressed(ex);
+                    // トランザクションを開始する
+                    transactionManager.begin();
+
+                    // 買い物客の情報を読み込む
+                    Shopper shopper = shopperService.load(shopperId);
+
+                    // トークンを読み込む
+                    Token token = tokenService.load(shopperId, tokenId);
+                    if (token == null) {
+                        throw new RuntimeException(String.format("This token is not exist : [%s, %s]", shopperId, tokenId));
+                    }
+
+                    // トークンを処理中にする
+                    token = token.processing();
+                    tokenService.store(token);
+
+                    // 請求処理
+                    Wallet wallet = walletService.load(shopper);
+                    Payment payment = wallet.pay(bill, tokenId);
+                    walletService.store(wallet);
+
+                    // トークンを使用済みにする
+                    token = token.used();
+                    tokenService.store(token);
+
+                    // 支払い結果を格納する
+                    paymentService.store(payment);
+
+                    transactionManager.commit();
+                    success = true;
+
+                } catch (Exception e) {
+                    if (tryCount == 1) {
+                        retryCauseList = new ArrayList(MAX_RETRY_COUNT);
+                    }
+                    retryCauseList.add(e);
+                    try {
+                        transactionManager.rollback();
+                    } catch (SystemException ex) {
+                        e.addSuppressed(ex);
+                    }
+                } finally {
+                    taskEvent.commit();
                 }
-            } finally {
-                taskEvent.commit();
+
+                if(success) break;
             }
-        }
 
-        advancedTokenCache.removeListener(EntryListener.getInstance());
-        advancedTokenCache.removeListener(TransactionListener.getInstance());
-        advancedWalletCache.removeListener(EntryListener.getInstance());
-        advancedWalletCache.removeListener(TransactionListener.getInstance());
-        paymentCache.removeListener(EntryListener.getInstance());
-        paymentCache.removeListener(TransactionListener.getInstance());
-        shopperCache.removeListener(EntryListener.getInstance());
-        shopperCache.removeListener(TransactionListener.getInstance());
+            advancedTokenCache.removeListener(EntryListener.getInstance());
+            advancedTokenCache.removeListener(TransactionListener.getInstance());
+            advancedWalletCache.removeListener(EntryListener.getInstance());
+            advancedWalletCache.removeListener(TransactionListener.getInstance());
+            paymentCache.removeListener(EntryListener.getInstance());
+            paymentCache.removeListener(TransactionListener.getInstance());
+            shopperCache.removeListener(EntryListener.getInstance());
+            shopperCache.removeListener(TransactionListener.getInstance());
 
-        if(retryCauseList.size() == MAX_RETRY_COUNT){
-            RuntimeException retryFailExeption = new RuntimeException("Fail to pay");
-            retryCauseList.stream().forEach(e->retryFailExeption.addSuppressed(e));
-            throw retryFailExeption;
+            if (!success) {
+                RuntimeException retryFailExeption = new RuntimeException("Fail to pay");
+                retryCauseList.stream().forEach(e -> retryFailExeption.addSuppressed(e));
+                throw retryFailExeption;
+            }
+        }catch(RuntimeException e){
+            e.printStackTrace();
+            throw e;
         }
     }
 }

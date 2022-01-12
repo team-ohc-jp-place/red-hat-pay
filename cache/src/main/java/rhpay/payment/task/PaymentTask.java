@@ -30,59 +30,67 @@ public class PaymentTask implements ServerTask<PaymentResponse> {
 
     @Override
     public void setTaskContext(TaskContext taskContext) {
+        try {
+            Map<String, ?> receivedParam = taskContext.getParameters().get();
+            final String traceId = (String) receivedParam.get("traceId");
+            final int shopperId = (Integer) receivedParam.get("shopperId");
+            final String tokenId = (String) receivedParam.get("tokenId");
+            final int amount = (Integer) receivedParam.get("amount");
+            final int storeId = (Integer) receivedParam.get("storeId");
+            final String storeName = (String) receivedParam.get("storeName");
+            Cache<ShopperKey, WalletEntity> cache = (Cache<ShopperKey, WalletEntity>) taskContext.getCache().get();
 
-        Map<String, ?> receivedParam = taskContext.getParameters().get();
-        final String traceId = (String) receivedParam.get("traceId");
-        final int shopperId = (Integer) receivedParam.get("shopperId");
-        final String tokenId = (String) receivedParam.get("tokenId");
-        final int amount = (Integer) receivedParam.get("amount");
-        final int storeId = (Integer) receivedParam.get("storeId");
-        final String storeName = (String) receivedParam.get("storeName");
-        Cache<ShopperKey, WalletEntity> cache = (Cache<ShopperKey, WalletEntity>) taskContext.getCache().get();
-
-        PaymentDistParam parameter = new PaymentDistParam(traceId, shopperId, tokenId, amount, storeId, storeName, cache);
-        parameterThreadLocal.set(parameter);
+            PaymentDistParam parameter = new PaymentDistParam(traceId, shopperId, tokenId, amount, storeId, storeName, cache);
+            parameterThreadLocal.set(parameter);
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @Override
     public PaymentResponse call() throws Exception {
-
-        PaymentDistParam parameter = parameterThreadLocal.get();
-
-        final String traceId = parameter.traceId;
-        final int shopperId = parameter.shopperId;
-        final String tokenId = parameter.tokenId;
-        final int amount = parameter.amount;
-        final int storeId = parameter.storeId;
-        final String storeName = parameter.storeName;
-
-        Event taskEvent = new TaskEvent(traceId, "PaymentTask", shopperId, tokenId);
-        taskEvent.begin();
-
         try {
-            // データのあるところで処理を実行する
-            ShopperKey key = new ShopperKey(parameter.shopperId);
-            PaymentFunction paymentFunction = new PaymentFunction(shopperId, tokenId, amount, storeId, storeName, traceId);
-            Cache<ShopperKey, WalletEntity> walletCache = parameter.cache;
-            CacheStream cacheStream = walletCache.entrySet().stream();
+            PaymentDistParam parameter = parameterThreadLocal.get();
 
-            // Distributed Streamを呼び出す側の記録
-            Event distributedTaskEvent = new CallDistributedTaskEvent(SegmentService.getSegment(walletCache, key), "paymentFunction");
-            distributedTaskEvent.begin();
+            final String traceId = parameter.traceId;
+            final int shopperId = parameter.shopperId;
+            final String tokenId = parameter.tokenId;
+            final int amount = parameter.amount;
+            final int storeId = parameter.storeId;
+            final String storeName = parameter.storeName;
+
+            Event taskEvent = new TaskEvent(traceId, "PaymentTask", shopperId, tokenId);
+            taskEvent.begin();
 
             try {
-                cacheStream.filterKeys(Set.of(key)).forEach(paymentFunction);
+                // データのあるところで処理を実行する
+                ShopperKey key = new ShopperKey(parameter.shopperId);
+                PaymentFunction paymentFunction = new PaymentFunction(shopperId, tokenId, amount, storeId, storeName, traceId);
+                Cache<ShopperKey, WalletEntity> walletCache = parameter.cache;
+                CacheStream cacheStream = walletCache.entrySet().stream();
+
+                // Distributed Streamを呼び出す側の記録
+                Event distributedTaskEvent = new CallDistributedTaskEvent(SegmentService.getSegment(walletCache, key), "paymentFunction");
+                distributedTaskEvent.begin();
+
+                try {
+                    cacheStream.filterKeys(Set.of(key)).forEach(paymentFunction);
+                } finally {
+                    distributedTaskEvent.commit();
+                }
+
+                // 処理の結果を取得する
+                PaymentService paymentService = new PaymentService(new CachePaymentRepository(walletCache.getCacheManager().getCache("payment")));
+                Payment payment = paymentService.load(new ShopperId(shopperId), new TokenId(tokenId));
+                return new PaymentResponse(storeId, shopperId, tokenId, payment.getBillingAmount().value, payment.getBillingDateTime().toEpochSecond(ZoneOffset.of("+09:00")));
+
             } finally {
-                distributedTaskEvent.commit();
+                taskEvent.commit();
             }
-
-            // 処理の結果を取得する
-            PaymentService paymentService = new PaymentService(new CachePaymentRepository(walletCache.getCacheManager().getCache("payment")));
-            Payment payment = paymentService.load(new ShopperId(shopperId), new TokenId(tokenId));
-            return new PaymentResponse(storeId, shopperId, tokenId, payment.getBillingAmount().value, payment.getBillingDateTime().toEpochSecond(ZoneOffset.of("+09:00")));
-
-        } finally {
-            taskEvent.commit();
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            throw e;
         }
     }
 
