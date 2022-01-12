@@ -5,7 +5,7 @@ metadata:
   annotations:
     infinispan.org/monitoring: 'true'
 spec:
-  replicas: 2
+  replicas: 3
   dependencies:
     artifacts:
       - url: http://httpd:8080/domain-1.0-SNAPSHOT.jar
