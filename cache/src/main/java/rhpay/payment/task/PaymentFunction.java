@@ -4,7 +4,6 @@ import jdk.jfr.Event;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.container.entries.ImmortalCacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
@@ -12,6 +11,7 @@ import org.infinispan.util.function.SerializableBiConsumer;
 import rhpay.monitoring.EntryListener;
 import rhpay.monitoring.TransactionListener;
 import rhpay.monitoring.event.DistributedTaskEvent;
+import rhpay.monitoring.event.WaitProcessingEvent;
 import rhpay.payment.cache.*;
 import rhpay.payment.domain.*;
 import rhpay.payment.repository.CachePaymentRepository;
@@ -27,6 +27,7 @@ import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey, WalletEntity>, ImmortalCacheEntry> {
 
@@ -65,7 +66,7 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
         try {
             EmbeddedCacheManager cacheManager = walletCache.getCacheManager();
             AdvancedCache<TokenKey, TokenEntity> advancedTokenCache = cacheManager.<TokenKey, TokenEntity>getCache("token").getAdvancedCache();
-            AdvancedCache<ShopperKey, WalletEntity> advancedWalletCache = walletCache.getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK);
+            AdvancedCache<ShopperKey, WalletEntity> advancedWalletCache = walletCache.getAdvancedCache();
             Cache<TokenKey, PaymentEntity> paymentCache = cacheManager.getCache("payment");
             Cache<ShopperKey, ShopperEntity> shopperCache = cacheManager.getCache("user");
             advancedTokenCache.addListener(EntryListener.getInstance());
@@ -90,6 +91,26 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
             final StoreId storeId = new StoreId(this.storeId);
             final StoreName storeName = new StoreName(this.storeName);
             final CoffeeStore store = new CoffeeStore(storeId, storeName);
+
+            Cache<ShopperKey, ProcessingEntity> processingCache = cacheManager.getCache("processing");
+
+            ProcessingEntity processingEntity = processingCache.compute(new ShopperKey(this.shopperId), new ProcessingFunction(traceId));
+            try {
+                int waitCount = 0;
+                while (!processingEntity.getProcessId().equals(traceId)) {
+                    // Here is that task didn't get the permission.
+                    waitCount++;
+                    Event waitEvent = new WaitProcessingEvent(traceId, waitCount, tokenId.value, shopperId.value);
+                    waitEvent.begin();
+                    TimeUnit.MICROSECONDS.sleep(10);
+                    processingEntity = processingCache.compute(new ShopperKey(this.shopperId), new ProcessingFunction(traceId));
+                    waitEvent.commit();
+                }
+            } catch (Exception e) {
+                RuntimeException re = new RuntimeException(String.format("Did not get the permission for processing task [%d]", this.shopperId));
+                re.addSuppressed(e);
+                throw re;
+            }
 
             List<Exception> retryCauseList = null;
             boolean success = false;
@@ -149,8 +170,10 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
                     taskEvent.commit();
                 }
 
-                if(success) break;
+                if (success) break;
             }
+
+            processingCache.remove(new ShopperKey(this.shopperId));
 
             advancedTokenCache.removeListener(EntryListener.getInstance());
             advancedTokenCache.removeListener(TransactionListener.getInstance());
@@ -166,7 +189,7 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
                 retryCauseList.stream().forEach(e -> retryFailExeption.addSuppressed(e));
                 throw retryFailExeption;
             }
-        }catch(RuntimeException e){
+        } catch (RuntimeException e) {
             e.printStackTrace();
             throw e;
         }

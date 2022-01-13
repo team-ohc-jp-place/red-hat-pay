@@ -19,6 +19,7 @@ public class PaymentServerTaskLoadTest {
     private static final String WALLET_CACHE_NAME = "wallet";
     private static final String PAYMENT_CACHE_NAME = "payment";
     private static final String SHOPPER_CACHE_NAME = "user";
+    private static final String PROCESSING_CACHE_NAME = "processing";
 
     public static void main(String... args) throws Exception {
 
@@ -46,12 +47,15 @@ public class PaymentServerTaskLoadTest {
                 new XMLStringConfiguration(String.format(TRANSACTIONAL_EXPIRED_CACHE_CONFIG, PAYMENT_CACHE_NAME)));
         RemoteCache<ShopperKey, ShopperEntity> shopperCache = manager.administration().getOrCreateCache(SHOPPER_CACHE_NAME,
                 new XMLStringConfiguration(String.format(NON_TX_CACHE_CONFIG, SHOPPER_CACHE_NAME)));
+        RemoteCache<ShopperKey, ProcessingEntity> processingCache = manager.administration().getOrCreateCache(PROCESSING_CACHE_NAME,
+                new XMLStringConfiguration(String.format(NON_TX_CACHE_CONFIG, PROCESSING_CACHE_NAME)));
 
         // データを削除
         walletCache.clear();
         tokenCache.clear();
         paymentCache.clear();
         shopperCache.clear();
+        processingCache.clear();
 
         // ユーザに関わるデータを作成
         for (int i = 0; i < userNum; i++) {
@@ -172,6 +176,7 @@ public class PaymentServerTaskLoadTest {
         tokenCache.clear();
         shopperCache.clear();
         paymentCache.clear();
+        processingCache.clear();
         manager.close();
     }
 
@@ -209,7 +214,7 @@ public class PaymentServerTaskLoadTest {
         try {
             prop.load(new FileInputStream("./infinispan.properties"));
             System.out.println("infinispan.propertiesを読み込みました");
-        }catch(Exception e){
+        } catch (Exception e) {
             System.err.println("infinispan.propertiesが読み込まれませんでした");
         }
 
@@ -288,6 +293,7 @@ class PaymentLoader implements Runnable {
 
                 payInfo.put("tokenId", t.getTokenId());
                 payInfo.put("shopperId", t.getOwnerId());
+                payInfo.put("traceId", UUID.randomUUID().toString());
 
                 walletCache.execute("PaymentTask", payInfo, new ShopperKey(t.getOwnerId()));
                 completedTokenList.add(t);

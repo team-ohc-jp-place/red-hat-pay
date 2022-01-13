@@ -14,7 +14,7 @@ metadata:
 spec:
   clusterName: example-infinispan
   name: wallet
-  template: <distributed-cache name="wallet"><encoding media-type="application/x-protostream"/><groups enabled="true"/><locking acquire-timeout="100" striping="false"/><transaction mode="BATCH" locking="PESSIMISTIC"/></distributed-cache>
+  template: <distributed-cache name="wallet"><encoding media-type="application/x-protostream"/><groups enabled="true"/><transaction mode="BATCH" locking="PESSIMISTIC"/></distributed-cache>
 ---
 apiVersion: infinispan.org/v2alpha1
 kind: Cache
@@ -24,6 +24,15 @@ spec:
   clusterName: example-infinispan
   name: user
   template: <distributed-cache name="user"><encoding media-type="application/x-protostream"/><groups enabled="true"/></distributed-cache>
+---
+apiVersion: infinispan.org/v2alpha1
+kind: Cache
+metadata:
+  name: processingcachedefinition
+spec:
+  clusterName: example-infinispan
+  name: processing
+  template: <distributed-cache name="processing"><encoding media-type="application/x-protostream"/><groups enabled="true"/></distributed-cache>
 ---
 apiVersion: infinispan.org/v2alpha1
 kind: Cache
