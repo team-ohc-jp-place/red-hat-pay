@@ -64,11 +64,10 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
     public void accept(Cache<ShopperKey, WalletEntity> walletCache, ImmortalCacheEntry entry) {
         try {
             EmbeddedCacheManager cacheManager = walletCache.getCacheManager();
-            AdvancedCache<TokenKey, TokenEntity> advancedTokenCache = cacheManager.<TokenKey, TokenEntity>getCache("token").getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK);
+            AdvancedCache<TokenKey, TokenEntity> advancedTokenCache = cacheManager.<TokenKey, TokenEntity>getCache("token").getAdvancedCache();
             AdvancedCache<ShopperKey, WalletEntity> advancedWalletCache = walletCache.getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK);
             Cache<TokenKey, PaymentEntity> paymentCache = cacheManager.getCache("payment");
             Cache<ShopperKey, ShopperEntity> shopperCache = cacheManager.getCache("user");
-
             advancedTokenCache.addListener(EntryListener.getInstance());
             advancedTokenCache.addListener(TransactionListener.getInstance());
             advancedWalletCache.addListener(EntryListener.getInstance());
@@ -109,6 +108,8 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
                     // 買い物客の情報を読み込む
                     Shopper shopper = shopperService.load(shopperId);
 
+                    Wallet wallet = walletService.load(shopper);
+
                     // トークンを読み込む
                     Token token = tokenService.load(shopperId, tokenId);
                     if (token == null) {
@@ -120,9 +121,7 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
                     tokenService.store(token);
 
                     // 請求処理
-                    Wallet wallet = walletService.load(shopper);
                     Payment payment = wallet.pay(bill, tokenId);
-                    walletService.store(wallet);
 
                     // トークンを使用済みにする
                     token = token.used();
@@ -130,6 +129,8 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
 
                     // 支払い結果を格納する
                     paymentService.store(payment);
+
+                    walletService.store(wallet);
 
                     transactionManager.commit();
                     success = true;

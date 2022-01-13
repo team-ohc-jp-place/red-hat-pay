@@ -30,16 +30,15 @@ public class InitialProcess {
             "<distributed-cache name=\"%s\">"
                     + " <encoding media-type=\"application/x-protostream\"/>"
                     + " <groups enabled=\"true\"/>"
-                    + " <locking acquire-timeout=\"10\" striping=\"false\"/>"
                     + " <transaction mode=\"BATCH\" locking=\"PESSIMISTIC\"/>"
                     + " <memory max-count=\"100000\" when-full=\"REMOVE\"/>"
                     + "</distributed-cache>";
 
-    private static final String TRANSACTIONAL_CACHE_CONFIG =
+    private static final String TRANSACTIONAL_LOCKING_CACHE_CONFIG =
             "<distributed-cache name=\"%s\">"
                     + " <encoding media-type=\"application/x-protostream\"/>"
                     + " <groups enabled=\"true\"/>"
-                    + " <locking acquire-timeout=\"10\" striping=\"false\"/>"
+                    + " <locking acquire-timeout=\"100\" striping=\"false\"/>"
                     + " <transaction mode=\"BATCH\" locking=\"PESSIMISTIC\"/>"
                     + "</distributed-cache>";
 
@@ -50,7 +49,7 @@ public class InitialProcess {
             System.out.println("user cache was created");
         }
         if (!cacheNames.contains("wallet")) {
-            cacheManager.administration().getOrCreateCache("wallet", new XMLStringConfiguration(String.format(TRANSACTIONAL_CACHE_CONFIG, "wallet")));
+            cacheManager.administration().getOrCreateCache("wallet", new XMLStringConfiguration(String.format(TRANSACTIONAL_LOCKING_CACHE_CONFIG, "wallet")));
             System.out.println("wallet cache was created");
         }
         if (!cacheNames.contains("token")) {
