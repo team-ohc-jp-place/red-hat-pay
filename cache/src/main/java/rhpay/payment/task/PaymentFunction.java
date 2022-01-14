@@ -11,7 +11,6 @@ import org.infinispan.util.function.SerializableBiConsumer;
 import rhpay.monitoring.EntryListener;
 import rhpay.monitoring.TransactionListener;
 import rhpay.monitoring.event.DistributedTaskEvent;
-import rhpay.monitoring.event.WaitProcessingEvent;
 import rhpay.payment.cache.*;
 import rhpay.payment.domain.*;
 import rhpay.payment.repository.CachePaymentRepository;
@@ -23,11 +22,9 @@ import rhpay.payment.service.ShopperService;
 import rhpay.payment.service.TokenService;
 import rhpay.payment.service.WalletService;
 
-import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey, WalletEntity>, ImmortalCacheEntry> {
 
@@ -78,8 +75,6 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
             shopperCache.addListener(EntryListener.getInstance());
             shopperCache.addListener(TransactionListener.getInstance());
 
-            TransactionManager transactionManager = walletCache.getAdvancedCache().getTransactionManager();
-
             WalletService walletService = new WalletService(new CacheWalletRepository(advancedWalletCache));
             ShopperService shopperService = new ShopperService(new CacheShopperRepository(shopperCache));
             TokenService tokenService = new TokenService(new CacheTokenRepository(advancedTokenCache));
@@ -92,30 +87,12 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
             final StoreName storeName = new StoreName(this.storeName);
             final CoffeeStore store = new CoffeeStore(storeId, storeName);
 
-            Cache<ShopperKey, ProcessingEntity> processingCache = cacheManager.getCache("processing");
-
-            ProcessingEntity processingEntity = processingCache.compute(new ShopperKey(this.shopperId), new ProcessingFunction(traceId));
-            try {
-                int waitCount = 0;
-                while (!processingEntity.getProcessId().equals(traceId)) {
-                    // Here is that task didn't get the permission.
-                    waitCount++;
-                    Event waitEvent = new WaitProcessingEvent(traceId, waitCount, tokenId.value, shopperId.value);
-                    waitEvent.begin();
-                    TimeUnit.MICROSECONDS.sleep(10);
-                    processingEntity = processingCache.compute(new ShopperKey(this.shopperId), new ProcessingFunction(traceId));
-                    waitEvent.commit();
-                }
-            } catch (Exception e) {
-                RuntimeException re = new RuntimeException(String.format("Did not get the permission for processing task [%d]", this.shopperId));
-                re.addSuppressed(e);
-                throw re;
-            }
-
             List<Exception> retryCauseList = null;
             boolean success = false;
 
             for (int tryCount = 1; tryCount <= MAX_RETRY_COUNT; tryCount++) {
+                TransactionManager transactionManager = walletCache.getAdvancedCache().getTransactionManager();
+
                 // Distributed Streamを実行している記録
                 Event taskEvent = new DistributedTaskEvent("PaymentTask", shopperId.value, tokenId.value, traceId, tryCount);
                 taskEvent.begin();
@@ -163,7 +140,7 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
                     retryCauseList.add(e);
                     try {
                         transactionManager.rollback();
-                    } catch (SystemException ex) {
+                    } catch (Exception ex) {
                         e.addSuppressed(ex);
                     }
                 } finally {
@@ -172,8 +149,6 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
 
                 if (success) break;
             }
-
-            processingCache.remove(new ShopperKey(this.shopperId));
 
             advancedTokenCache.removeListener(EntryListener.getInstance());
             advancedTokenCache.removeListener(TransactionListener.getInstance());

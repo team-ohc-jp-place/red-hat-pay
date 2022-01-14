@@ -42,7 +42,7 @@ public class PaymentServerTaskLoadTest {
         RemoteCache<TokenKey, TokenEntity> tokenCache = manager.administration().getOrCreateCache(TOKEN_CACHE_NAME,
                 new XMLStringConfiguration(String.format(TRANSACTIONAL_EXPIRED_CACHE_CONFIG, TOKEN_CACHE_NAME)));
         RemoteCache<ShopperKey, WalletEntity> walletCache = manager.administration().getOrCreateCache(WALLET_CACHE_NAME,
-                new XMLStringConfiguration(String.format(TRANSACTIONAL_LOCKING_CACHE_CONFIG, WALLET_CACHE_NAME)));
+                new XMLStringConfiguration(String.format(TRANSACTIONAL_CACHE_CONFIG, WALLET_CACHE_NAME)));
         RemoteCache<ShopperKey, WalletEntity> paymentCache = manager.administration().getOrCreateCache(PAYMENT_CACHE_NAME,
                 new XMLStringConfiguration(String.format(TRANSACTIONAL_EXPIRED_CACHE_CONFIG, PAYMENT_CACHE_NAME)));
         RemoteCache<ShopperKey, ShopperEntity> shopperCache = manager.administration().getOrCreateCache(SHOPPER_CACHE_NAME,
@@ -196,16 +196,15 @@ public class PaymentServerTaskLoadTest {
             "<distributed-cache name=\"%s\">"
                     + " <encoding media-type=\"application/x-protostream\"/>"
                     + " <groups enabled=\"true\"/>"
-                    + " <transaction mode=\"BATCH\" locking=\"PESSIMISTIC\"/>"
+                    + " <transaction mode=\"BATCH\" locking=\"OPTIMISTIC\"/>"
                     + " <memory max-count=\"100000\" when-full=\"REMOVE\"/>"
                     + "</distributed-cache>";
 
-    private static final String TRANSACTIONAL_LOCKING_CACHE_CONFIG =
+    private static final String TRANSACTIONAL_CACHE_CONFIG =
             "<distributed-cache name=\"%s\">"
                     + " <encoding media-type=\"application/x-protostream\"/>"
                     + " <groups enabled=\"true\"/>"
-                    + " <locking acquire-timeout=\"100\" striping=\"false\"/>"
-                    + " <transaction mode=\"BATCH\" locking=\"PESSIMISTIC\"/>"
+                    + " <transaction mode=\"BATCH\" locking=\"OPTIMISTIC\"/>"
                     + "</distributed-cache>";
 
     private static Configuration createConfiguration() throws Exception {

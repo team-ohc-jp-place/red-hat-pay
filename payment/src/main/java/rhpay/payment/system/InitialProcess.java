@@ -30,7 +30,7 @@ public class InitialProcess {
             "<distributed-cache name=\"%s\">"
                     + " <encoding media-type=\"application/x-protostream\"/>"
                     + " <groups enabled=\"true\"/>"
-                    + " <transaction mode=\"BATCH\" locking=\"PESSIMISTIC\"/>"
+                    + " <transaction mode=\"BATCH\" locking=\"OPTIMISTIC\"/>"
                     + " <memory max-count=\"100000\" when-full=\"REMOVE\"/>"
                     + "</distributed-cache>";
 
@@ -38,7 +38,7 @@ public class InitialProcess {
             "<distributed-cache name=\"%s\">"
                     + " <encoding media-type=\"application/x-protostream\"/>"
                     + " <groups enabled=\"true\"/>"
-                    + " <transaction mode=\"BATCH\" locking=\"PESSIMISTIC\"/>"
+                    + " <transaction mode=\"BATCH\" locking=\"OPTIMISTIC\"/>"
                     + "</distributed-cache>";
 
     void onStart(@Observes StartupEvent ev) {
