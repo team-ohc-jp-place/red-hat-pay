@@ -1,3 +1,10 @@
+set -e
+
+cd `dirname $0`
+
+initialCwd=`pwd -P`
+scriptDir=`dirname ${BASH_SOURCE[0]}`
+
 # create route for registry
 oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{"spec":{"defaultRoute":true}}'
 
@@ -13,10 +20,14 @@ oc new-project red-hat-pay-monolith
 
 # Enabling monitoring for user-defined projects
 oc project red-hat-pay
-oc apply -f environment/cluster-monitoring-config.yaml
-oc apply -f environment/service-account.yaml
+oc apply -f ${scriptDir}/monitoring/cluster-monitoring-config.yaml
+oc apply -f ${scriptDir}/monitoring/service-account.yaml
 oc adm policy add-cluster-role-to-user cluster-monitoring-view -z infinispan-monitoring
-oc apply -f environment/service_monitor.yaml
-oc apply -f environment/cluster_logging.yaml
+oc apply -f ${scriptDir}/monitoring/service_monitor.yaml
+oc apply -f ${scriptDir}/logging/cluster_logging.yaml
+
+# Kernel parameters
+oc apply -f ${scriptDir}/node/tuning_kernel_parameter.yaml
+
 
 echo "Please install some operators such as Data Grid, Cryostat on OpenShift Console"
