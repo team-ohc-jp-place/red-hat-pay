@@ -11,5 +11,5 @@ public interface TokenEntityRepository extends JpaRepository<TokenEntity, TokenK
 
     @Modifying
     @Query("UPDATE TokenEntity t SET t.status = :newStatus WHERE t.id.ownerId = :shopperId AND t.id.tokenId = :tokenId")
-    int updateStatus(@Param("shopperId") Integer shopperId, @Param("tokenId") String tokenId, @Param("currentStatus") int currentStatus);
+    int updateStatus(@Param("shopperId") Integer shopperId, @Param("tokenId") String tokenId, @Param("newStatus") int newStatus);
 }
