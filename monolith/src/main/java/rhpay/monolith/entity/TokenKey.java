@@ -2,6 +2,7 @@ package rhpay.monolith.entity;
 
 import javax.persistence.Embeddable;
 import java.io.Serializable;
+import java.util.Objects;
 
 @Embeddable
 public class TokenKey implements Serializable {
@@ -31,5 +32,18 @@ public class TokenKey implements Serializable {
 
     public void setTokenId(String tokenId) {
         this.tokenId = tokenId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TokenKey tokenKey = (TokenKey) o;
+        return ownerId == tokenKey.ownerId && tokenId.equals(tokenKey.tokenId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(ownerId, tokenId);
     }
 }

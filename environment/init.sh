@@ -5,6 +5,8 @@ cd `dirname $0`
 initialCwd=`pwd -P`
 scriptDir=`dirname ${BASH_SOURCE[0]}`
 
+mvn install:install-file -Dfile=${scriptDir}/build/jfr4jdbc-driver-1.1.0.jar -DgroupId=dev.jfr4jdbc -DartifactId=jfr4jdbc-driver -Dversion=1.1.0 -Dpackaging=jar -DgeneratePom=true
+
 # create route for registry
 oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{"spec":{"defaultRoute":true}}'
 

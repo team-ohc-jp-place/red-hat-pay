@@ -27,7 +27,12 @@ public class RdbmsWalletRepository implements WalletRepository {
 
     @Override
     public void store(Wallet wallet) {
-        WalletEntity entity = new WalletEntity(wallet.getOwner().getId().value, wallet.getChargedMoney().value, wallet.getAutoChargeMoney().value);
-        walletSpringRepository.save(entity);
+        int rowNum = walletSpringRepository.updateChargedMoney(wallet.getOwner().getId().value, wallet.getChargedMoney().value);
+        if (rowNum == 0) {
+            throw new RuntimeException(String.format("Wallet token is not exist on Data Store: %s", wallet));
+        } else if (rowNum == 1) {
+            return;
+        }
+        throw new RuntimeException(String.format("Many wallet were changed : %s", wallet));
     }
 }
