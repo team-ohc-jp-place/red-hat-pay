@@ -26,7 +26,12 @@ public class RdbmsPointRepository implements PointRepository {
 
     @Override
     public void store(Point point) {
-        PointEntity entity = new PointEntity(point.getOwnerId().value, point.getPoint());
-        pointSpringRepository.save(entity);
+        int rowNum = pointSpringRepository.updatePoint(point.getOwnerId().value, point.getPoint());
+        if (rowNum == 0) {
+            throw new RuntimeException(String.format("This point is not exist on Data Store: %s", point));
+        } else if (rowNum == 1) {
+            return;
+        }
+        throw new RuntimeException(String.format("Many point were changed : %s", point));
     }
 }
