@@ -18,17 +18,17 @@ spec:
 #      ephemeralStorage: false
 #      storageClassName: my-storage-class
   container:
-    extraJvmOpts: "-XX:NativeMemoryTracking=summary -Xlog:gc*:stdout:time,level,tags -Dcom.sun.management.jmxremote.port=9091 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.autodiscovery=true -XX:StartFlightRecording=name=RedHatPay,settings=default,disk=true,filename=RedHatPayRecording.jfr,maxage=15m,dumponexit=true"
-    cpu: "1000m"
-    memory: 1Gi
+    extraJvmOpts: "-XX:NativeMemoryTracking=summary -Xlog:gc*:stdout:time,level,tags -XX:NewRatio=9 -XX:+UseParallelGC -XX:ParallelGCThreads=2 -XX:+UseParallelOldGC -Dcom.sun.management.jmxremote.port=9091 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.autodiscovery=true -XX:StartFlightRecording=name=RedHatPay,settings=default,disk=true,filename=RedHatPayRecording.jfr,maxage=15m,dumponexit=true"
+    cpu: "2"
+    memory: 8Gi
   expose:
     type: Route
   logging:
     categories:
-      org.infinispan: error
-      org.jgroups: error
-      org.jgroups.protocols.TCP: error
-      org.jgroups.protocols.relay.RELAY2: error
+#      org.infinispan: error
+#      org.jgroups: error
+#      org.jgroups.protocols.TCP: error
+#      org.jgroups.protocols.relay.RELAY2: error
   affinity:
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
