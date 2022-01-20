@@ -10,9 +10,9 @@
 # 初期処理
 ```shell
 $ git clone https://github.com/team-ohc-jp-place/red-hat-pay.git
-$ cd red-hat-pay
-$ bash environment/init.sh 
-$ bash environment/setting.sh
+$ cd red-hat-pay/environment
+$ bash init.sh 
+$ bash setting.sh
 ```
 
 # Red Hat Pay名前空間へ各Operatorをインストール
@@ -21,7 +21,7 @@ $ bash environment/setting.sh
 
 # アプリケーションのビルドとアプリケーションコンテナのビルド・プッシュ
 ```shell
-$ bash environment/build/build.sh
+$ bash build.sh
 ```
 
 # 環境をデプロイ
@@ -42,5 +42,5 @@ echo "http://`oc -n rhp-istio-system get route istio-ingressgateway -o jsonpath=
 
 # 環境を削除
 ```shell
-$ bash environment/cleanup.sh 
+$ bash cleanup.sh 
 ```
