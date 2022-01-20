@@ -67,10 +67,10 @@ objects:
                 value: --print-stats -P=8089
             resources:
               limits:
-                cpu: "1000m"
+                cpu: "3"
                 memory: "1024Mi"
               requests:
-                cpu: "1000m"
+                cpu: "3"
                 memory: "1024Mi"
             ports:
             - name: comm
