@@ -1,10 +1,8 @@
 package rhpay.point.repository.function;
 
-import jdk.jfr.Event;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.util.function.SerializableBiFunction;
-import rhpay.monitoring.event.ShopperFunctionEvent;
 import rhpay.payment.cache.ShopperKey;
 import rhpay.payment.domain.Money;
 import rhpay.payment.domain.ShopperId;
@@ -28,9 +26,6 @@ public class PointAddFunction implements SerializableBiFunction<ShopperKey, Poin
     @Override
     public PointEntity apply(ShopperKey pointKey, PointEntity cachedPointData) {
 
-        Event functionEvent = new ShopperFunctionEvent("PointAddFunction", pointKey.getOwnerId());
-        functionEvent.begin();
-
         try {
             // キャッシュされたオブジェクトからドメインのオブジェクトを作成
             Point currentPoint = new Point(new ShopperId(pointKey.getOwnerId()), cachedPointData.getAmount());
@@ -41,7 +36,6 @@ public class PointAddFunction implements SerializableBiFunction<ShopperKey, Poin
             // レスポンスを返す
             return new PointEntity(newPoint.getPoint());
         } finally {
-            functionEvent.commit();
         }
     }
 }

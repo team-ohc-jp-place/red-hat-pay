@@ -1,10 +1,12 @@
 package rhpay.monitoring.event;
 
 import jdk.jfr.Category;
+import jdk.jfr.Enabled;
 import jdk.jfr.Label;
 
 @Label("ShopperGetJfrEvent")
 @Category({"RedHatPay", "DataGrid", "Listener"})
+@Enabled(value = false)
 public class ShopperGetJfrEvent extends EntryJfrEvent {
 
     @Label("shopperId")

@@ -8,8 +8,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.util.function.SerializableBiConsumer;
-import rhpay.monitoring.EntryListener;
-import rhpay.monitoring.TransactionListener;
 import rhpay.monitoring.event.DistributedTaskEvent;
 import rhpay.payment.cache.*;
 import rhpay.payment.domain.*;
@@ -66,6 +64,7 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
             AdvancedCache<ShopperKey, WalletEntity> advancedWalletCache = walletCache.getAdvancedCache();
             Cache<TokenKey, PaymentEntity> paymentCache = cacheManager.getCache("payment");
             Cache<ShopperKey, ShopperEntity> shopperCache = cacheManager.getCache("user");
+/*
             advancedTokenCache.addListener(EntryListener.getInstance());
             advancedTokenCache.addListener(TransactionListener.getInstance());
             advancedWalletCache.addListener(EntryListener.getInstance());
@@ -74,7 +73,7 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
             paymentCache.addListener(TransactionListener.getInstance());
             shopperCache.addListener(EntryListener.getInstance());
             shopperCache.addListener(TransactionListener.getInstance());
-
+*/
             WalletService walletService = new WalletService(new CacheWalletRepository(advancedWalletCache));
             ShopperService shopperService = new ShopperService(new CacheShopperRepository(shopperCache));
             TokenService tokenService = new TokenService(new CacheTokenRepository(advancedTokenCache));
@@ -149,7 +148,7 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
 
                 if (success) break;
             }
-
+/*
             advancedTokenCache.removeListener(EntryListener.getInstance());
             advancedTokenCache.removeListener(TransactionListener.getInstance());
             advancedWalletCache.removeListener(EntryListener.getInstance());
@@ -158,7 +157,7 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
             paymentCache.removeListener(TransactionListener.getInstance());
             shopperCache.removeListener(EntryListener.getInstance());
             shopperCache.removeListener(TransactionListener.getInstance());
-
+*/
             if (!success) {
                 RuntimeException retryFailExeption = new RuntimeException("Fail to pay");
                 retryCauseList.stream().forEach(e -> retryFailExeption.addSuppressed(e));

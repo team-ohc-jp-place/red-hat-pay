@@ -1,11 +1,13 @@
 package rhpay.monitoring.event;
 
 import jdk.jfr.Category;
+import jdk.jfr.Enabled;
 import jdk.jfr.Event;
 import jdk.jfr.Label;
 
 @Label("TransactionRegisteredEvent")
 @Category({"RedHatPay", "DataGrid", "Listener"})
+@Enabled(value = false)
 public class TransactionRegisteredJfrEvent extends Event {
 
     @Label("cacheName")

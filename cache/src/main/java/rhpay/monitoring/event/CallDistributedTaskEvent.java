@@ -1,11 +1,13 @@
 package rhpay.monitoring.event;
 
 import jdk.jfr.Category;
+import jdk.jfr.Enabled;
 import jdk.jfr.Event;
 import jdk.jfr.Label;
 
 @Label("CallDistributedTask")
 @Category({"RedHatPay", "DataGrid"})
+@Enabled(value = false)
 public class CallDistributedTaskEvent extends Event {
 
     @Label("segment")
