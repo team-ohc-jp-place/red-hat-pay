@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "Payment")
+@Cacheable(value = false)
 public class PaymentEntity implements Serializable {
     @EmbeddedId
     private TokenKey id;

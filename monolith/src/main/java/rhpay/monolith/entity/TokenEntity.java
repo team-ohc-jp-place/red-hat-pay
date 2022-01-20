@@ -5,6 +5,7 @@ import java.io.Serializable;
 
 @Entity
 @Table(name = "Token")
+@Cacheable(value = false)
 public class TokenEntity implements Serializable {
 
     @EmbeddedId

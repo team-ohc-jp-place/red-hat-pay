@@ -1,13 +1,11 @@
 package rhpay.monolith.entity;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
 @Table(name = "Wallet")
+@Cacheable(value = false)
 public class WalletEntity implements Serializable {
 
     @Id

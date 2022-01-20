@@ -1,5 +1,6 @@
 package rhpay.monolith.entity;
 
+import javax.persistence.Cacheable;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -7,6 +8,7 @@ import java.io.Serializable;
 
 @Entity
 @Table(name = "Point")
+@Cacheable(value = false)
 public class PointEntity implements Serializable {
     
     @Id

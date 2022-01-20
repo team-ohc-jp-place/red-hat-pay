@@ -1,10 +1,12 @@
 package rhpay.monolith.entity;
 
+import javax.persistence.Cacheable;
 import javax.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
 
 @Embeddable
+@Cacheable(value = false)
 public class TokenKey implements Serializable {
 
     private int ownerId;
