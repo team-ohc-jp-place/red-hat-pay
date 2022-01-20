@@ -9,6 +9,8 @@ import rhpay.payment.domain.Shopper;
 import rhpay.payment.domain.ShopperId;
 import rhpay.payment.repository.ShopperRepository;
 
+import java.util.NoSuchElementException;
+
 @Component
 @RequestScope
 public class RdbmsShopperRepository implements ShopperRepository {
@@ -21,7 +23,12 @@ public class RdbmsShopperRepository implements ShopperRepository {
 
     @Override
     public Shopper load(ShopperId id) {
-        ShopperEntity shopperEntity = shopperSpringRepository.findById(id.value).get();
-        return new Shopper(id, new FullName(shopperEntity.getName()));
+        try {
+            ShopperEntity shopperEntity = shopperSpringRepository.findById(id.value).get();
+            return new Shopper(id, new FullName(shopperEntity.getName()));
+        }catch(NoSuchElementException e){
+            e.addSuppressed(new RuntimeException(String.format("Target shopper is %s", id)));
+            throw e;
+        }
     }
 }
