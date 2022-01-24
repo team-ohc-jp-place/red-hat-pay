@@ -1,7 +1,5 @@
 set -e
 
-cd `dirname $0`
-
 initialCwd=`pwd -P`
 scriptDir=`dirname ${BASH_SOURCE[0]}`
 
@@ -34,6 +32,9 @@ oc apply -f ${scriptDir}/prod/servicemesh/servicemesh_controlplane.yaml
 oc apply -f ${scriptDir}/prod/servicemesh/servicemesh_memberroll-default.yaml
 oc apply -f ${scriptDir}/prod/servicemesh/servicemesh-gateway.yaml
 oc apply -f ${scriptDir}/prod/servicemesh/servicemesh_destination-rule-all.yaml
+
+# OpenShift Logging
+oc apply -f ${scriptDir}/prod/logging/cluster_logging.yaml
 
 # side car container injection
 sleep 30

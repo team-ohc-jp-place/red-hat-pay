@@ -1,7 +1,5 @@
 set -e
 
-cd `dirname $0`
-
 initialCwd=`pwd -P`
 scriptDir=`dirname ${BASH_SOURCE[0]}`
 
