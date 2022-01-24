@@ -4,7 +4,7 @@ initialCwd=`pwd -P`
 scriptDir=`dirname ${BASH_SOURCE[0]}`
 
 # DataGrid
-bash install_dg.sh
+bash ${scriptDir}/install_dg.sh
 
 # JFR for Infinispan
 oc apply -f ${scriptDir}/prod/cryostat/enable_jfr_data_grid.yaml
@@ -42,8 +42,4 @@ oc rollout restart deploy payment
 oc rollout restart deploy point
 
 echo ""
-echo "Application(via Istio) http://`oc -n rhp-istio-system get route istio-ingressgateway -o jsonpath='{.spec.host}'`/index"
-echo "Application(Direct) http://`oc get route payment -o jsonpath='{.spec.host}'`/index"
-echo "Cryostat : http://`oc get route cryostat-sample -o jsonpath='{.spec.host}'`"
-echo "Infinispan Console : http://`oc get route example-infinispan-external -o jsonpath='{.spec.host}'`"
-echo "OpenShift Logging : http://`oc get route kibana -n openshift-logging -o jsonpath='{.spec.host}'`"
+bash ${scriptDir}/showURL.sh
