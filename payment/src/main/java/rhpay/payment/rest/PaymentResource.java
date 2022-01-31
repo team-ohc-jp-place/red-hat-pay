@@ -2,7 +2,6 @@ package rhpay.payment.rest;
 
 import io.quarkus.qute.Template;
 import io.smallrye.mutiny.Uni;
-import org.eclipse.microprofile.opentracing.Traced;
 import rhpay.monitoring.TokenRestEvent;
 import rhpay.monitoring.TracerService;
 import rhpay.payment.domain.*;
@@ -14,7 +13,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
 @Path("/")
-@Traced
+//@Traced
 public class PaymentResource {
 
     @Inject

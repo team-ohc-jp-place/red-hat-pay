@@ -13,23 +13,23 @@ spec:
     metadata:
       labels:
         app: payment
-      annotations:
-        sidecar.istio.io/inject: "true"
+#      annotations:
+#        sidecar.istio.io/inject: "true"
     spec:
       containers:
-      - name: payment-jvm
-        image: image-registry.openshift-image-registry.svc:5000/red-hat-pay/payment-jvm:latest
-        resources:
-          limits:
-            cpu: 1000m
-            memory: 1024Mi
-          requests:
-            cpu: 1000m
-            memory: 1024Mi
-        ports:
-        - containerPort: 8080
-        - containerPort: 9091
-          protocol: TCP
+        - name: payment-jvm
+          image: image-registry.openshift-image-registry.svc:5000/red-hat-pay/payment-jvm:latest
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 1024Mi
+            requests:
+              cpu: 1000m
+              memory: 1024Mi
+          ports:
+            - containerPort: 8080
+            - containerPort: 9091
+              protocol: TCP
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -46,16 +46,16 @@ spec:
     metadata:
       labels:
         app: point
-      annotations:
-        sidecar.istio.io/inject: "true"
+#      annotations:
+#        sidecar.istio.io/inject: "true"
     spec:
       containers:
-      - name: point-jvm
-        image: image-registry.openshift-image-registry.svc:5000/red-hat-pay/point-jvm:latest
-        ports:
-        - containerPort: 8080
-        - containerPort: 9091
-          protocol: TCP
+        - name: point-jvm
+          image: image-registry.openshift-image-registry.svc:5000/red-hat-pay/point-jvm:latest
+          ports:
+            - containerPort: 8080
+            - containerPort: 9091
+              protocol: TCP
 ---
 apiVersion: v1
 kind: Service
@@ -65,14 +65,14 @@ metadata:
   name: payment
 spec:
   ports:
-  - name: web
-    port: 8080
-    protocol: TCP
-    targetPort: 8080
-  - name: jfr-jmx
-    port: 9091
-    protocol: TCP
-    targetPort: 9091
+    - name: web
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    - name: jfr-jmx
+      port: 9091
+      protocol: TCP
+      targetPort: 9091
   selector:
     app: payment
   sessionAffinity: None
@@ -86,14 +86,14 @@ metadata:
   name: point
 spec:
   ports:
-  - name: web
-    port: 8080
-    protocol: TCP
-    targetPort: 8080
-  - name: jfr-jmx
-    port: 9091
-    protocol: TCP
-    targetPort: 9091
+    - name: web
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    - name: jfr-jmx
+      port: 9091
+      protocol: TCP
+      targetPort: 9091
   selector:
     app: point
   sessionAffinity: None

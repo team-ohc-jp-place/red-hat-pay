@@ -28,10 +28,10 @@ oc apply -f ${scriptDir}/prod/monitoring/create_grafana_dashboard.yaml
 oc apply -f ${scriptDir}/prod/cryostat/create_cryostat.yaml
 
 # Service Mesh
-oc apply -f ${scriptDir}/prod/servicemesh/servicemesh_controlplane.yaml
-oc apply -f ${scriptDir}/prod/servicemesh/servicemesh_memberroll-default.yaml
-oc apply -f ${scriptDir}/prod/servicemesh/servicemesh-gateway.yaml
-oc apply -f ${scriptDir}/prod/servicemesh/servicemesh_destination-rule-all.yaml
+# oc apply -f ${scriptDir}/prod/servicemesh/servicemesh_controlplane.yaml
+# oc apply -f ${scriptDir}/prod/servicemesh/servicemesh_memberroll-default.yaml
+# oc apply -f ${scriptDir}/prod/servicemesh/servicemesh-gateway.yaml
+# oc apply -f ${scriptDir}/prod/servicemesh/servicemesh_destination-rule-all.yaml
 
 # OpenShift Logging
 oc apply -f ${scriptDir}/prod/logging/cluster_logging.yaml

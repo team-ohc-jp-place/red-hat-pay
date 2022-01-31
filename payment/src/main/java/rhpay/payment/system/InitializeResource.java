@@ -3,7 +3,6 @@ package rhpay.payment.system;
 import io.quarkus.infinispan.client.Remote;
 import io.quarkus.qute.Template;
 import io.smallrye.mutiny.Uni;
-import org.eclipse.microprofile.opentracing.Traced;
 import org.infinispan.client.hotrod.RemoteCache;
 import rhpay.payment.cache.*;
 
@@ -17,7 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Path("/")
-@Traced
+//@Traced
 public class InitializeResource {
 
     @Inject
