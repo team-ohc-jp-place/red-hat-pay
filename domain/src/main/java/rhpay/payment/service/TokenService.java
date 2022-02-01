@@ -13,18 +13,18 @@ public class TokenService {
         this.tokenRepository = tokenRepository;
     }
 
-    public Token create(ShopperId id){
-        Token token = new Token(id, new TokenId(UUID.randomUUID().toString()), TokenStatus.UNUSED);
+    public Token create(ShopperId id) {
+        Token token = new Token(id, new TokenId(UUID.randomUUID().toString().substring(0, 4)), TokenStatus.UNUSED);
         tokenRepository.create(token);
 
         return token;
     }
 
-    public Token load(ShopperId shopperId, TokenId tokenId) throws TokenException{
+    public Token load(ShopperId shopperId, TokenId tokenId) throws TokenException {
         return tokenRepository.load(shopperId, tokenId);
     }
 
-    public void store(Token token) throws TokenException{
+    public void store(Token token) throws TokenException {
         tokenRepository.store(token);
     }
 }
