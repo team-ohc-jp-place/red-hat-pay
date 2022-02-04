@@ -1,5 +1,9 @@
 #!/bin/bash
 
+set -e
+
+scriptDir=`dirname ${BASH_SOURCE[0]}`
+
 testFile=""
 hostName=""
 
@@ -20,7 +24,7 @@ fi
 echo "Confirmation: file to run is: $testFile and the host: $hostName"
 
 # Prepare Config map with new values
-cat > config-map.yaml << EOF1
+cat > ${scriptDir}/config-map.yaml << EOF1
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -31,13 +35,13 @@ data:
 EOF1
 
 # Push it to cluster
-cat config-map.yaml | oc apply -f -
+cat ${scriptDir}/config-map.yaml | oc apply -f -
 
 # Clean after yourself
-rm ./config-map.yaml
+rm ${scriptDir}/config-map.yaml
 
 # Prepare Config map with new values
-cat > config-map.yaml << EOF1
+cat > ${scriptDir}/config-map.yaml << EOF1
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -49,14 +53,13 @@ $(cat $testFile | sed 's/^/    /')
 EOF1
 
 # Push it to cluster
-cat config-map.yaml | oc apply -f -
+cat ${scriptDir}/config-map.yaml | oc apply -f -
 
 # Clean after yourself
-rm ./config-map.yaml
+rm ${scriptDir}/config-map.yaml
 
 # Update the environment variable to trigger a change
-oc project locust
-oc set env dc/locust-master --overwrite CONFIG_HASH=`date +%s%N`
-oc set env dc/locust-slave --overwrite CONFIG_HASH=`date +%s%N`
+oc set env -n locust dc/locust-master --overwrite CONFIG_HASH=`date +%s%N`
+oc set env -n locust dc/locust-slave --overwrite CONFIG_HASH=`date +%s%N`
 
 oc project ${CURRENT_NS}

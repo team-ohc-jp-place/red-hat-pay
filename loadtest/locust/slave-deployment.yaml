@@ -11,7 +11,7 @@ objects:
       name: locust-slave
       namespace: ${NAMESPACE}
     spec:
-      replicas: 1
+      replicas: 3
       template:
         metadata:
           labels:
