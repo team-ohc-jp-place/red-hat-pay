@@ -42,18 +42,17 @@ public class TokenUsecase {
             tokenService.store(token);
 
             // 請求処理
-            Payment payment = wallet.pay(bill, input.tokenId);
+            Payment payment = wallet.pay(bill);
 
             // 財布を更新
             walletService.store(wallet);
 
             // トークンを使用済みにする
-            token = token.used();
+            token = token.used(payment);
             tokenService.store(token);
 
             // 支払い結果を格納する
             paymentService.store(payment);
-
 
             return payment;
         } catch (Exception e) {

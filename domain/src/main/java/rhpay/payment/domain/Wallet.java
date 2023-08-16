@@ -26,22 +26,40 @@ public class Wallet {
         return autoChargeMoney;
     }
 
-    public Payment pay(Billing bill, TokenId tokenId) {
+    public Payment pay(Billing bill) {
 
-        if (autoChargeMoney.value > 0) {
-            while (!chargedMoney.canPay(bill.getAmount())) {
-                chargedMoney = chargedMoney.charge(autoChargeMoney);
+        if (this.autoChargeable()) {
+            // オートチャージされる場合
+            while (!this.canPay(bill)) {
+                this.autoCharge();
+            }
+        } else {
+            // オートチャージされない場合
+            if (!this.canPay(bill)) {
+                throw new RuntimeException(String.format("Couldn't buy items. Amount in wallet is %d, but store bill %d", this.chargedMoney.value, bill.getAmount().value));
             }
         }
 
-        Money newAmount = chargedMoney.pay(bill.getAmount());
-
-        if (newAmount.isBankrupt()) {
-            throw new RuntimeException(String.format("Couldn't buy items. Amount in wallet is %d, but store bill %d", this.chargedMoney.value, bill.getAmount().value));
-        }
+        Money newAmount = chargedMoney.minus(bill.getAmount());
 
         chargedMoney = newAmount;
 
-        return new Payment(bill.getStoreId(), this.getOwner().getId(), tokenId, bill.getAmount(), LocalDateTime.now());
+        return new Payment(bill.getStoreId(), this.getOwner().getId(), bill.getAmount(), LocalDateTime.now());
+    }
+
+    public Money autoCharge() {
+        if(!autoChargeable()){
+            throw new RuntimeException("Could not auto charge");
+        }
+        chargedMoney = chargedMoney.add(autoChargeMoney);
+        return chargedMoney;
+    }
+
+    public boolean autoChargeable() {
+        return autoChargeMoney.isPositive();
+    }
+
+    public boolean canPay(Billing bill) {
+        return chargedMoney.largerEqual(bill.getAmount());
     }
 }

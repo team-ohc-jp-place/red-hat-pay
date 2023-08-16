@@ -7,10 +7,20 @@ public class Token {
 
     private final TokenStatus status;
 
+    private final Payment payment;
+
     public Token(ShopperId shopperId, TokenId tokenId, TokenStatus status) {
         this.shopperId = shopperId;
         this.tokenId = tokenId;
         this.status = status;
+        this.payment = null;
+    }
+
+    public Token(ShopperId shopperId, TokenId tokenId, TokenStatus status, Payment payment) {
+        this.shopperId = shopperId;
+        this.tokenId = tokenId;
+        this.status = status;
+        this.payment = payment;
     }
 
     public Token processing() throws TokenException {
@@ -21,9 +31,9 @@ public class Token {
         }
     }
 
-    public Token used() throws TokenException {
+    public Token used(Payment payment) throws TokenException {
         if (this.status.equals(TokenStatus.PROCESSING)) {
-            return new Token(this.shopperId, this.tokenId, TokenStatus.USED);
+            return new Token(this.shopperId, this.tokenId, TokenStatus.USED, payment);
         } else {
             throw new TokenException(String.format("Attempted to change status of tokens to 'used' even though it is '%s' : [%s, %s]", this.status.name, this.shopperId, this.tokenId));
         }

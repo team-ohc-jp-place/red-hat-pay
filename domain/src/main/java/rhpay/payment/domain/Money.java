@@ -4,23 +4,34 @@ public class Money {
     public final int value;
 
     public Money(int value) {
+        if(value < 0) {
+            throw new RuntimeException("Negative value set to Money");
+        }
         this.value = value;
     }
 
-    public Money charge(Money chargeMoney) {
-        return new Money(value + chargeMoney.value);
+    public Money add(Money a) {
+        return new Money(value + a.value);
     }
 
-    public boolean canPay(Money billingMoney) {
-        return value > billingMoney.value;
+    public Money minus(Money a) {
+        return new Money(value - a.value);
     }
 
-    public Money pay(Money billingMoney) {
-        return new Money(value - billingMoney.value);
-    }
-
-    public boolean isBankrupt(){
+    public boolean isNegative(){
         return value < 0;
+    }
+
+    public boolean isZero(){
+        return value == 0;
+    }
+
+    public boolean isPositive(){
+        return value > 0;
+    }
+
+    public boolean largerEqual(Money a){
+        return value >= a.value;
     }
 
     @Override
