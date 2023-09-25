@@ -10,11 +10,22 @@ public class Payment {
     private final Money billingAmount;
     private final LocalDateTime billingDateTime;
 
+    private final TokenId tokenId;
+
     public Payment(StoreId storeId, ShopperId shopperId, Money billingAmount, LocalDateTime billingDateTime) {
         this.storeId = storeId;
         this.shopperId = shopperId;
         this.billingAmount = billingAmount;
         this.billingDateTime = billingDateTime;
+        this.tokenId = null;
+    }
+
+    public Payment(StoreId storeId, ShopperId shopperId, Money billingAmount, LocalDateTime billingDateTime, TokenId tokenId) {
+        this.storeId = storeId;
+        this.shopperId = shopperId;
+        this.billingAmount = billingAmount;
+        this.billingDateTime = billingDateTime;
+        this.tokenId = tokenId;
     }
 
     public StoreId getStoreId() {
@@ -33,6 +44,10 @@ public class Payment {
         return billingDateTime;
     }
 
+    public TokenId getTokenId() {
+        return tokenId;
+    }
+
     @Override
     public String toString() {
         return "Payment{" +
@@ -40,6 +55,7 @@ public class Payment {
                 ", shopperId=" + shopperId +
                 ", billingAmount=" + billingAmount +
                 ", billingDateTime=" + billingDateTime +
+                ", tokenId=" + tokenId +
                 '}';
     }
 }

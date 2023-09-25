@@ -21,7 +21,7 @@ public class RdbmsPaymentRepository implements PaymentRepository {
     @Override
     public Payment load(ShopperId shopperId, TokenId tokenId) {
         PaymentEntity entity = paymentSpringRepository.findById(new TokenKey(shopperId.value, tokenId.value)).get();
-        return new Payment(new StoreId(entity.getStoreId()), shopperId, tokenId, new Money(entity.getBillingAmount()), entity.getBillingDateTime());
+        return new Payment(new StoreId(entity.getStoreId()), shopperId, new Money(entity.getBillingAmount()), entity.getBillingDateTime(), tokenId);
     }
 
     @Override

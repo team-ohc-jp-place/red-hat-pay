@@ -65,7 +65,7 @@ public class PaymentTask implements ServerTask<PaymentResponse> {
             final String storeName = parameter.storeName;
 
             // Server Taskのメトリクスを記録する
-            Event taskEvent = new TaskEvent(traceId, "PaymentTask", shopperId, tokenId);
+            Event taskEvent = new TaskEvent(traceId, "PaymentTask", shopperId);
             taskEvent.begin();
 
             try {

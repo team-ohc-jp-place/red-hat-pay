@@ -2,7 +2,6 @@ package rhpay.payment.usecase;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import rhpay.payment.domain.*;
 import rhpay.payment.repository.*;
@@ -12,7 +11,6 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class TokenUsecaseTest {
 
@@ -33,9 +31,9 @@ public class TokenUsecaseTest {
         MockShopperRepository shopperRepository = new MockShopperRepository();
         MockCoffeeStoreRepository coffeeStoreRepository = new MockCoffeeStoreRepository();
 
-        TokenPayInput input = new TokenPayInput(tokenRepository, coffeeStoreRepository, shopperRepository, paymentRepository, walletRepository, shopperId, new Money(4), tokenId, storeId);
+        TokenPayInput input = new TokenPayInput(shopperId, new Money(4), tokenId, storeId);
 
-        TokenUsecase usecase = new TokenUsecase();
+        TokenUsecaseImpl usecase = new TokenUsecaseImpl(tokenRepository, coffeeStoreRepository, shopperRepository, paymentRepository, walletRepository);
 
         try {
             Payment payment = usecase.pay(input);

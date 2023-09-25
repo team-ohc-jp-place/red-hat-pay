@@ -26,17 +26,23 @@ public class Wallet {
         return autoChargeMoney;
     }
 
-    public Payment pay(Billing bill) {
+    public Payment pay(Billing bill) throws FailedPaymentException {
 
         if (this.autoChargeable()) {
             // オートチャージされる場合
-            while (!this.canPay(bill)) {
-                this.autoCharge();
+            try {
+                while (!this.canPay(bill)) {
+                    this.autoCharge();
+                }
+            }catch (FailedAutoChargeException e){
+                FailedPaymentException newe = new FailedPaymentException(String.format("Couldn't buy items. Amount in wallet is %d, but store bill %d", this.chargedMoney.value, bill.getAmount().value));
+                newe.addSuppressed(e);
+                throw newe;
             }
         } else {
             // オートチャージされない場合
             if (!this.canPay(bill)) {
-                throw new RuntimeException(String.format("Couldn't buy items. Amount in wallet is %d, but store bill %d", this.chargedMoney.value, bill.getAmount().value));
+                throw new FailedPaymentException(String.format("Couldn't buy items. Amount in wallet is %d, but store bill %d", this.chargedMoney.value, bill.getAmount().value));
             }
         }
 
@@ -47,9 +53,9 @@ public class Wallet {
         return new Payment(bill.getStoreId(), this.getOwner().getId(), bill.getAmount(), LocalDateTime.now());
     }
 
-    public Money autoCharge() {
+    public Money autoCharge() throws FailedAutoChargeException {
         if(!autoChargeable()){
-            throw new RuntimeException("Could not auto charge");
+            throw new FailedAutoChargeException("Could not auto charge");
         }
         chargedMoney = chargedMoney.add(autoChargeMoney);
         return chargedMoney;

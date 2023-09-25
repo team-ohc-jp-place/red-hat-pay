@@ -43,7 +43,7 @@ public class PointTask implements ServerTask<PointEntity> {
         TokenId tokenId = new TokenId((String) param.get("tokenId"));
         Money billAmount = new Money((Integer) param.get("amount"));
         final LocalDateTime dateTime = LocalDateTime.ofEpochSecond((Long) param.get("epoch"), 0, ZoneOffset.of("+09:00"));
-        Payment payment = new Payment(storeId, shopperId, tokenId, billAmount, dateTime);
+        Payment payment = new Payment(storeId, shopperId, billAmount, dateTime);
 
         PointTaskParameter parameter = new PointTaskParameter(traceId, payment, pointService, pointCache);
         parameterThreadLocal.set(parameter);
@@ -63,7 +63,7 @@ public class PointTask implements ServerTask<PointEntity> {
 
         TransactionManager transactionManager = parameter.pointCache.getAdvancedCache().getTransactionManager();
 
-        Event taskEvent = new TaskEvent(traceId, "PointTask", parameter.payment.getShopperId().value, parameter.payment.getTokenId().value);
+        Event taskEvent = new TaskEvent(traceId, "PointTask", parameter.payment.getShopperId().value);
         taskEvent.begin();
         try {
             // トランザクションを開始する

@@ -33,10 +33,15 @@ public class Token {
 
     public Token used(Payment payment) throws TokenException {
         if (this.status.equals(TokenStatus.PROCESSING)) {
-            return new Token(this.shopperId, this.tokenId, TokenStatus.USED, payment);
+            Payment relatedPayment = new Payment(payment.getStoreId(), payment.getShopperId(), payment.getBillingAmount(), payment.getBillingDateTime(), tokenId);
+            return new Token(this.shopperId, this.tokenId, TokenStatus.USED, relatedPayment);
         } else {
             throw new TokenException(String.format("Attempted to change status of tokens to 'used' even though it is '%s' : [%s, %s]", this.status.name, this.shopperId, this.tokenId));
         }
+    }
+
+    public Payment getRelatedPayment(){
+        return this.payment;
     }
 
     public Token failed() {

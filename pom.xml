@@ -10,7 +10,8 @@
     <module>domain</module>
     <module>queue</module>
     <module>cache</module>
-    <module>payment</module>
+    <module>payment-quarkus</module>
+    <module>payment-wildfly</module>
     <module>point</module>
     <module>loadtest</module>
     <module>monolith</module>

@@ -24,7 +24,7 @@ public class WalletTest {
         try {
             w.autoCharge();
             fail();
-        } catch (Exception e) {
+        } catch (FailedAutoChargeException e) {
             assertEquals("Could not auto charge", e.getMessage());
         }
     }
@@ -37,9 +37,13 @@ public class WalletTest {
 
         assertTrue(w1.autoChargeable());
 
-        Money newChargedMoney = w1.autoCharge();
-        assertEquals(11, newChargedMoney.value);
-        assertEquals(11, w1.getChargedMoney().value);
+        try {
+            Money newChargedMoney = w1.autoCharge();
+            assertEquals(11, newChargedMoney.value);
+            assertEquals(11, w1.getChargedMoney().value);
+        }catch (FailedAutoChargeException e){
+            fail();
+        }
     }
 
     @Test
@@ -50,11 +54,14 @@ public class WalletTest {
 
         Money billAmount = new Money(10);
         Billing billing = new Billing(STORE_1.getId(), billAmount);
+        try {
+            Payment payment = w.pay(billing);
+            assertEquals(payment.getBillingAmount().value, 10);
+            assertEquals(w.getChargedMoney().value, 0);
 
-        Payment payment = w.pay(billing);
-
-        assertEquals(payment.getBillingAmount().value, 10);
-        assertEquals(w.getChargedMoney().value, 0);
+        }catch(FailedPaymentException e){
+            fail();
+        }
     }
 
     /**
@@ -86,7 +93,7 @@ public class WalletTest {
 
             // ここに来るとテストが失敗です。
             fail();
-        } catch(Exception e){
+        } catch(FailedPaymentException e){
             // 失敗のメッセージが正しいかを確認します。
             assertEquals("Couldn't buy items. Amount in wallet is 5, but store bill 10", e.getMessage());
         }
@@ -100,7 +107,7 @@ public class WalletTest {
      * 買い物客は SHOPPER_1 を使用してください
      */
     @Test
-    @DisplayName("オートチャージにっよって支払いできる")
+    @DisplayName("オートチャージによって支払いできる")
     public void payWithAutochargeTest() {
 /*
         // TODO: チャージされているお金を chargedMoney として作成（10円）
@@ -116,7 +123,7 @@ public class WalletTest {
         try {
             // TODO: 財布と請求を使用して支払いをして、その戻り値のとなる支払い (Paymentクラス）を payment として作成
             // TODO: 財布の残高が 4 円であることを確認
-        } catch (Exception e) {
+        } catch (FailedPaymentException e) {
             // ここに来るとテストが失敗です。
             fail();
         }

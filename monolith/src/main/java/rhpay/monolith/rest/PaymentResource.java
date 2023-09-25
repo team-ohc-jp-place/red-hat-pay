@@ -9,7 +9,7 @@ import rhpay.monolith.monitoring.PointEvent;
 import rhpay.payment.domain.*;
 import rhpay.payment.repository.*;
 import rhpay.payment.usecase.TokenPayInput;
-import rhpay.payment.usecase.TokenUsecase;
+import rhpay.payment.usecase.TokenUsecaseImpl;
 import rhpay.point.domain.Point;
 import rhpay.point.repository.PointRepository;
 import rhpay.point.usecase.AddPointInput;
@@ -37,7 +37,7 @@ public class PaymentResource {
     @PostMapping(value = "/pay/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Transactional
     public TokenResponse createTokenAPI(@PathVariable("userId") final int userId) {
-        TokenUsecase usecase = new TokenUsecase();
+        TokenUsecaseImpl usecase = new TokenUsecaseImpl(tokenRepository, coffeeStoreRepository, shopperRepository, paymentRepository, walletRepository);
         Token token = usecase.createToken(new ShopperId(userId), tokenRepository);
         return new TokenResponse(token.getShopperId().value, token.getTokenId().value, token.getStatus());
     }
@@ -60,8 +60,8 @@ public class PaymentResource {
             // 請求処理
             paymentEvent.begin();
 
-            TokenPayInput input = new TokenPayInput(tokenRepository, coffeeStoreRepository, shopperRepository, paymentRepository, walletRepository, shopperId, amount, tokenId, storeId);
-            TokenUsecase usecase = new TokenUsecase();
+            TokenPayInput input = new TokenPayInput(shopperId, amount, tokenId, storeId);
+            TokenUsecaseImpl usecase = new TokenUsecaseImpl(tokenRepository, coffeeStoreRepository, shopperRepository, paymentRepository, walletRepository);
             Payment payment = usecase.pay(input);
 
             paymentEvent.commit();

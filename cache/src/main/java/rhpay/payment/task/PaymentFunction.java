@@ -13,7 +13,7 @@ import rhpay.payment.cache.*;
 import rhpay.payment.domain.*;
 import rhpay.payment.repository.*;
 import rhpay.payment.usecase.TokenPayInput;
-import rhpay.payment.usecase.TokenUsecase;
+import rhpay.payment.usecase.TokenUsecaseImpl;
 
 import javax.transaction.TransactionManager;
 import java.util.ArrayList;
@@ -89,8 +89,8 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
             CoffeeStoreRepository coffeeStoreRepository = new DoNothingCoffeeStoreRepository(store);
 
             // ドメイン処理に必要なものを作成
-            TokenPayInput input = new TokenPayInput(tokenRepository, coffeeStoreRepository, shopperRepository, paymentRepository, walletRepository, shopperId, amount, tokenId, storeId);
-            TokenUsecase usecase = new TokenUsecase();
+            TokenPayInput input = new TokenPayInput(shopperId, amount, tokenId, storeId);
+            TokenUsecaseImpl usecase = new TokenUsecaseImpl(tokenRepository, coffeeStoreRepository, shopperRepository, paymentRepository, walletRepository);
 
             //
             List<Exception> retryCauseList = null;
