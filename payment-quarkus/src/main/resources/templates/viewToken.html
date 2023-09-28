@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    {#if reload}
+    <meta http-equiv="refresh" content="5; url=/viewToken/{token.getShopperId().value}/{token.getTokenId().value}" />
+    {/if}
+    <title>トークン表示画面</title>
+    <script src="/assets/js/JsBarcode/qrcode.min.js"></script>
+    <script>
+        function load() {
+            let qrcode = document.getElementById("qrcode");
+            let qrcode_object = new QRCode(
+                qrcode,
+                {
+                    text: "{token.getShopperId().value}/{token.getTokenId().value}",
+                    width: 128,
+                    height: 128,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+        }
+    </script>
+</head>
+<body onload="load();">
+<h1>Red Hat Pay</h1>
+このQRコードを店員に見せてください
+<div id="qrcode"></div>
+<br/>
+状態：{token.getStatus().name}<br/>
+{#if payment != null}
+使用店舗ID：{payment.getStoreId().value}<br/>
+支払金額：{payment.billingAmount().value} 円<br/>
+支払日時：{payment.billingDateTime}<br/>
+<br/>
+<form method="post" name="form" action="/createToken/1">
+    <a href="javascript:form.submit()">次のトークンを表示</a>
+</form>
+{/if}
+</body>
+</html>

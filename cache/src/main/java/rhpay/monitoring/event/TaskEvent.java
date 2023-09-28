@@ -17,13 +17,9 @@ public class TaskEvent extends Event {
     @Label("shopperId")
     private final int shopperId;
 
-    @Label("tokenId")
-    private final String tokenId;
-
-    public TaskEvent(String traceId, String taskName, int shopperId, String tokenId) {
+    public TaskEvent(String traceId, String taskName, int shopperId) {
         this.traceId = traceId;
         this.taskName = taskName;
         this.shopperId = shopperId;
-        this.tokenId = tokenId;
     }
 }

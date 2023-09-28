@@ -26,7 +26,7 @@ public class CachePaymentRepository implements PaymentRepository {
         event.begin();
         try {
             PaymentEntity entity = paymentCache.get(key);
-            return new Payment(new StoreId(entity.getStoreId()), shopperId, tokenId, new Money(entity.getBillingAmount()), LocalDateTime.ofEpochSecond(entity.getBillingDateTime(), 0, ZoneOffset.of("+09:00")));
+            return new Payment(new StoreId(entity.getStoreId()), shopperId, new Money(entity.getBillingAmount()), LocalDateTime.ofEpochSecond(entity.getBillingDateTime(), 0, ZoneOffset.of("+09:00")), tokenId);
         } finally {
             event.commit();
         }

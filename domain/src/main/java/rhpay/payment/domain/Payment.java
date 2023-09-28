@@ -7,16 +7,25 @@ public class Payment {
     private final StoreId storeId;
     private final ShopperId shopperId;
 
-    private final TokenId tokenId;
     private final Money billingAmount;
     private final LocalDateTime billingDateTime;
 
-    public Payment(StoreId storeId, ShopperId shopperId, TokenId tokenId, Money billingAmount, LocalDateTime billingDateTime) {
+    private final TokenId tokenId;
+
+    public Payment(StoreId storeId, ShopperId shopperId, Money billingAmount, LocalDateTime billingDateTime) {
         this.storeId = storeId;
         this.shopperId = shopperId;
-        this.tokenId = tokenId;
         this.billingAmount = billingAmount;
         this.billingDateTime = billingDateTime;
+        this.tokenId = null;
+    }
+
+    public Payment(StoreId storeId, ShopperId shopperId, Money billingAmount, LocalDateTime billingDateTime, TokenId tokenId) {
+        this.storeId = storeId;
+        this.shopperId = shopperId;
+        this.billingAmount = billingAmount;
+        this.billingDateTime = billingDateTime;
+        this.tokenId = tokenId;
     }
 
     public StoreId getStoreId() {
@@ -44,9 +53,9 @@ public class Payment {
         return "Payment{" +
                 "storeId=" + storeId +
                 ", shopperId=" + shopperId +
-                ", tokenId=" + tokenId +
                 ", billingAmount=" + billingAmount +
                 ", billingDateTime=" + billingDateTime +
+                ", tokenId=" + tokenId +
                 '}';
     }
 }

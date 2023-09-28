@@ -11,14 +11,9 @@ import org.infinispan.util.function.SerializableBiConsumer;
 import rhpay.monitoring.event.DistributedTaskEvent;
 import rhpay.payment.cache.*;
 import rhpay.payment.domain.*;
-import rhpay.payment.repository.CachePaymentRepository;
-import rhpay.payment.repository.CacheShopperRepository;
-import rhpay.payment.repository.CacheTokenRepository;
-import rhpay.payment.repository.CacheWalletRepository;
-import rhpay.payment.service.PaymentService;
-import rhpay.payment.service.ShopperService;
-import rhpay.payment.service.TokenService;
-import rhpay.payment.service.WalletService;
+import rhpay.payment.repository.*;
+import rhpay.payment.usecase.TokenPayInput;
+import rhpay.payment.usecase.TokenUsecaseImpl;
 
 import javax.transaction.TransactionManager;
 import java.util.ArrayList;
@@ -59,6 +54,7 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
     @Override
     public void accept(Cache<ShopperKey, WalletEntity> walletCache, ImmortalCacheEntry entry) {
         try {
+            // 使用するキャッシュを取得する
             EmbeddedCacheManager cacheManager = walletCache.getCacheManager();
             AdvancedCache<TokenKey, TokenEntity> advancedTokenCache = cacheManager.<TokenKey, TokenEntity>getCache("token").getAdvancedCache();
             AdvancedCache<ShopperKey, WalletEntity> advancedWalletCache = walletCache.getAdvancedCache();
@@ -74,78 +70,75 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
             shopperCache.addListener(EntryListener.getInstance());
             shopperCache.addListener(TransactionListener.getInstance());
 */
-            WalletService walletService = new WalletService(new CacheWalletRepository(advancedWalletCache));
-            ShopperService shopperService = new ShopperService(new CacheShopperRepository(shopperCache));
-            TokenService tokenService = new TokenService(new CacheTokenRepository(advancedTokenCache));
-            PaymentService paymentService = new PaymentService(new CachePaymentRepository(paymentCache));
 
+            // リポジトリを作成
+            WalletRepository walletRepository = new CacheWalletRepository(advancedWalletCache);
+            ShopperRepository shopperRepository = new CacheShopperRepository(shopperCache);
+            TokenRepository tokenRepository = new CacheTokenRepository(advancedTokenCache);
+            PaymentRepository paymentRepository = new CachePaymentRepository(paymentCache);
+
+            // Infinispan クライアントから受け取った情報をドメインの情報に変換
             final ShopperId shopperId = new ShopperId(this.shopperId);
             final TokenId tokenId = new TokenId(this.tokenId);
             final Money amount = new Money(this.amount);
             final StoreId storeId = new StoreId(this.storeId);
+
+            // ストアの情報はクライアントから渡されている物を使う
             final StoreName storeName = new StoreName(this.storeName);
             final CoffeeStore store = new CoffeeStore(storeId, storeName);
+            CoffeeStoreRepository coffeeStoreRepository = new DoNothingCoffeeStoreRepository(store);
 
+            // ドメイン処理に必要なものを作成
+            TokenPayInput input = new TokenPayInput(shopperId, amount, tokenId, storeId);
+            TokenUsecaseImpl usecase = new TokenUsecaseImpl(tokenRepository, coffeeStoreRepository, shopperRepository, paymentRepository, walletRepository);
+
+            //
             List<Exception> retryCauseList = null;
             boolean success = false;
 
+            // 処理が失敗しても再実行する
             for (int tryCount = 1; tryCount <= MAX_RETRY_COUNT; tryCount++) {
+                // トランザクションを取得
                 TransactionManager transactionManager = walletCache.getAdvancedCache().getTransactionManager();
 
-                // Distributed Streamを実行している記録
+                // 1回分の処理のメトリクスを記録
                 Event taskEvent = new DistributedTaskEvent("PaymentTask", shopperId.value, tokenId.value, traceId, tryCount);
                 taskEvent.begin();
-
-                final Billing bill = store.createBill(amount);
 
                 try {
                     // トランザクションを開始する
                     transactionManager.begin();
 
-                    // 買い物客の情報を読み込む
-                    Shopper shopper = shopperService.load(shopperId);
+                    // 業務処理を実行
+                    Payment payment = usecase.pay(input);
 
-                    Wallet wallet = walletService.load(shopper);
-
-                    // トークンを読み込む
-                    Token token = tokenService.load(shopperId, tokenId);
-                    if (token == null) {
-                        throw new RuntimeException(String.format("This token is not exist : [%s, %s]", shopperId, tokenId));
-                    }
-
-                    // トークンを処理中にする
-                    token = token.processing();
-                    tokenService.store(token);
-
-                    // 請求処理
-                    Payment payment = wallet.pay(bill, tokenId);
-
-                    // トークンを使用済みにする
-                    token = token.used();
-                    tokenService.store(token);
-
-                    // 支払い結果を格納する
-                    paymentService.store(payment);
-
-                    walletService.store(wallet);
-
+                    // 成功したのでトランザクションをコミット
                     transactionManager.commit();
                     success = true;
 
                 } catch (Exception e) {
+                    // はじめて失敗した場合は例外をためる List を作る
                     if (tryCount == 1) {
                         retryCauseList = new ArrayList(MAX_RETRY_COUNT);
                     }
+
+                    // 例外をためる
                     retryCauseList.add(e);
+
+                    // 失敗したのでトランザクションをロールバック
                     try {
                         transactionManager.rollback();
                     } catch (Exception ex) {
                         e.addSuppressed(ex);
                     }
                 } finally {
-                    taskEvent.commit();
+                    // メトリクスの取得を終了
+                    if(taskEvent.shouldCommit()) {
+                        taskEvent.commit();
+                    }
                 }
 
+                // 処理が成功したら繰り返しを抜ける
                 if (success) break;
             }
 /*
@@ -158,6 +151,7 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
             shopperCache.removeListener(EntryListener.getInstance());
             shopperCache.removeListener(TransactionListener.getInstance());
 */
+            // 最終的に失敗した場合は例外を１つにまとめて投げる
             if (!success) {
                 RuntimeException retryFailExeption = new RuntimeException("Fail to pay");
                 retryCauseList.stream().forEach(e -> retryFailExeption.addSuppressed(e));
@@ -167,5 +161,13 @@ public class PaymentFunction implements SerializableBiConsumer<Cache<ShopperKey,
             e.printStackTrace();
             throw e;
         }
+    }
+
+    private void addCacheListener(){
+
+    }
+
+    private void removeCacheListener(){
+
     }
 }

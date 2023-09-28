@@ -8,10 +8,12 @@ import rhpay.monolith.monitoring.PaymentEvent;
 import rhpay.monolith.monitoring.PointEvent;
 import rhpay.payment.domain.*;
 import rhpay.payment.repository.*;
-import rhpay.payment.service.*;
+import rhpay.payment.usecase.TokenPayInput;
+import rhpay.payment.usecase.TokenUsecaseImpl;
 import rhpay.point.domain.Point;
 import rhpay.point.repository.PointRepository;
-import rhpay.point.service.PointService;
+import rhpay.point.usecase.AddPointInput;
+import rhpay.point.usecase.PointUsecase;
 
 @RestController
 public class PaymentResource {
@@ -35,97 +37,62 @@ public class PaymentResource {
     @PostMapping(value = "/pay/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Transactional
     public TokenResponse createTokenAPI(@PathVariable("userId") final int userId) {
-        TokenService tokenService = new TokenService(tokenRepository);
-        Token token = tokenService.create(new ShopperId(userId));
-        TokenResponse res = new TokenResponse(token.getShopperId().value, token.getTokenId().value, token.getStatus());
-        return res;
+        TokenUsecaseImpl usecase = new TokenUsecaseImpl(tokenRepository, coffeeStoreRepository, shopperRepository, paymentRepository, walletRepository);
+        Token token = usecase.createToken(new ShopperId(userId), tokenRepository);
+        return new TokenResponse(token.getShopperId().value, token.getTokenId().value, token.getStatus());
     }
 
     @PostMapping(value = "/pay/{userId}/{tokenId}/{storeId}/{amount}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Transactional
     public PaymentResponse pay(@PathVariable("userId") final int userIdInt, @PathVariable("tokenId") final String tokenIdStr, @PathVariable("storeId") final int storeIdInt, @PathVariable("amount") int amountInt) throws Exception {
-        TokenService tokenService = new TokenService(tokenRepository);
-        CoffeeStoreService coffeeStoreService = new CoffeeStoreService(coffeeStoreRepository);
-        PointService pointService = new PointService(pointRepository);
-        ShopperService shopperService = new ShopperService(shopperRepository);
-        PaymentService paymentService = new PaymentService(paymentRepository);
-        WalletService walletService = new WalletService(walletRepository);
 
+        // 入力情報をドメインの情報に変換
         ShopperId shopperId = new ShopperId(userIdInt);
         Money amount = new Money(amountInt);
         TokenId tokenId = new TokenId(tokenIdStr);
         StoreId storeId = new StoreId(storeIdInt);
 
-        Token token = null;
+        // メトリクスの準備
         Event paymentEvent = new PaymentEvent();
         Event pointEvent = null;
 
         try {
-            paymentEvent.begin();
-            // 買い物客と店舗の情報を読み込む
-            Shopper shopper = shopperService.load(shopperId);
-            CoffeeStore store = coffeeStoreService.load(storeId);
-            Wallet wallet = walletService.load(shopper);
-
-            // 請求する内容を作成
-            Billing bill = store.createBill(amount);
-
-            // トークンを読み込む
-            token = tokenService.load(shopperId, tokenId);
-            if (token == null) {
-                throw new RuntimeException(String.format("This token is not exist : [%s, %s]", shopperId, tokenId));
-            }
-
-            // トークンを処理中にする
-            token = token.processing();
-            tokenService.store(token);
-
             // 請求処理
-            Payment payment = wallet.pay(bill, tokenId);
+            paymentEvent.begin();
 
-            // 財布を更新
-            walletService.store(wallet);
-
-            // トークンを使用済みにする
-            token = token.used();
-            tokenService.store(token);
-
-            // 支払い結果を格納する
-            paymentService.store(payment);
+            TokenPayInput input = new TokenPayInput(shopperId, amount, tokenId, storeId);
+            TokenUsecaseImpl usecase = new TokenUsecaseImpl(tokenRepository, coffeeStoreRepository, shopperRepository, paymentRepository, walletRepository);
+            Payment payment = usecase.pay(input);
 
             paymentEvent.commit();
+
+            // ポイント加算処理
             pointEvent = new PointEvent();
             pointEvent.begin();
 
-            // ポイントを加算する
-            Point point = pointService.load(shopperId);
-            point.addPoint(payment.getBillingAmount());
-            pointService.store(point);
+            AddPointInput addPointInput = new AddPointInput(payment, pointRepository);
+            PointUsecase pointUsecase = new PointUsecase();
+            Point point = pointUsecase.addPoint(addPointInput);
 
             pointEvent.commit();
 
+            // ドメインの情報を出力情報に変換
             PaymentResponse res = new PaymentResponse(payment.getStoreId().value, payment.getShopperId().value, payment.getTokenId().value, payment.getBillingAmount().value, payment.getBillingDateTime());
 
             return res;
-        } catch (Exception e) {
-            PaymentException thrw = new PaymentException("Fail to pay");
-            if (token != null) {
-                try {
-                    token.failed();
-                    tokenService.store(token);
-                } catch (Exception e1) {
-                    thrw.addSuppressed(e1);
+
+        } finally {
+            // 例外発生時にメトリクスを正常に終了させる
+            if (pointEvent == null) {
+                if (paymentEvent.shouldCommit()) {
+                    paymentEvent.commit();
+                }
+            } else {
+                if (pointEvent.shouldCommit()) {
+                    pointEvent.commit();
                 }
             }
-            thrw.addSuppressed(e);
-            thrw.printStackTrace();
-            throw thrw;
-        } finally {
-            if (pointEvent == null) {
-                paymentEvent.commit();
-            } else {
-                pointEvent.commit();
-            }
         }
+
     }
 }

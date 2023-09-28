@@ -23,6 +23,8 @@ import java.util.Set;
 
 /**
  * 支払時のサーバタスク
+ * クライアントから委譲された処理はこのクラスのcallメソッドにたどり着く。
+ * 適切なサーバへアクセスできていない可能性もあるため、Distributed Streamをさらに実行する
  */
 public class PaymentTask implements ServerTask<PaymentResponse> {
 
@@ -40,6 +42,7 @@ public class PaymentTask implements ServerTask<PaymentResponse> {
             final String storeName = (String) receivedParam.get("storeName");
             Cache<ShopperKey, WalletEntity> cache = (Cache<ShopperKey, WalletEntity>) taskContext.getCache().get();
 
+            // このオブジェクトはシングルトンなため、値をフィールドとして持たせてはいけません。
             PaymentDistParam parameter = new PaymentDistParam(traceId, shopperId, tokenId, amount, storeId, storeName, cache);
             parameterThreadLocal.set(parameter);
         } catch (RuntimeException e) {
@@ -51,6 +54,7 @@ public class PaymentTask implements ServerTask<PaymentResponse> {
     @Override
     public PaymentResponse call() throws Exception {
         try {
+            // スレッドローカルに保存したデータを取得
             PaymentDistParam parameter = parameterThreadLocal.get();
 
             final String traceId = parameter.traceId;
@@ -60,7 +64,8 @@ public class PaymentTask implements ServerTask<PaymentResponse> {
             final int storeId = parameter.storeId;
             final String storeName = parameter.storeName;
 
-            Event taskEvent = new TaskEvent(traceId, "PaymentTask", shopperId, tokenId);
+            // Server Taskのメトリクスを記録する
+            Event taskEvent = new TaskEvent(traceId, "PaymentTask", shopperId);
             taskEvent.begin();
 
             try {
@@ -75,8 +80,10 @@ public class PaymentTask implements ServerTask<PaymentResponse> {
                 distributedTaskEvent.begin();
 
                 try {
+                    // Distributed Streamを実行
                     cacheStream.filterKeys(Set.of(key)).forEach(paymentFunction);
                 } finally {
+                    // 記録を終了
                     distributedTaskEvent.commit();
                 }
 

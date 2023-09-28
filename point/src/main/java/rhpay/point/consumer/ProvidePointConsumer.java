@@ -32,7 +32,7 @@ public class ProvidePointConsumer {
         ShopperId shopperId = new ShopperId(paymentEvent.userId);
         TokenId tokenId = new TokenId(paymentEvent.tokenId);
 
-        Payment payment = new Payment(storeId, shopperId, tokenId, new Money(paymentEvent.amount), paymentEvent.dateTime);
+        Payment payment = new Payment(storeId, shopperId, new Money(paymentEvent.amount), paymentEvent.dateTime, tokenId);
 
         System.out.println(payment);
         Point point = pointDelegateService.invoke(payment);
