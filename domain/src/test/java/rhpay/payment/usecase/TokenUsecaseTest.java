@@ -6,6 +6,7 @@ import org.mockito.MockitoAnnotations;
 import rhpay.payment.domain.*;
 import rhpay.payment.repository.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.fail;
@@ -25,7 +26,9 @@ public class TokenUsecaseTest {
         TokenId tokenId = new TokenId("a");
         StoreId storeId = new StoreId(1);
 
-        MockTokenRepository tokenRepository = new MockTokenRepository(List.of(new Token(shopperId, tokenId, TokenStatus.UNUSED)));
+        List<Token> tokenList = new ArrayList();
+        tokenList.add(new Token(shopperId, tokenId, TokenStatus.UNUSED));
+        MockTokenRepository tokenRepository = new MockTokenRepository(tokenList);
         MockWalletRepository walletRepository = new MockWalletRepository();
         MockPaymentRepository paymentRepository = new MockPaymentRepository();
         MockShopperRepository shopperRepository = new MockShopperRepository();
