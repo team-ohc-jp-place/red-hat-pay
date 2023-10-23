@@ -24,8 +24,8 @@ public class TokenUsecaseImpl implements TokenUsecase {
         this.walletRepository = walletRepository;
     }
 
-    public Token createToken(ShopperId shopperId, TokenRepository tokenRepository) {
-        TokenService tokenService = new TokenService(tokenRepository);
+    public Token createToken(ShopperId shopperId) {
+        TokenService tokenService = new TokenService(this.tokenRepository);
         Token token = tokenService.create(shopperId);
         return token;
     }

@@ -4,17 +4,14 @@ import rhpay.payment.domain.*;
 import rhpay.payment.usecase.TokenPayInput;
 import rhpay.payment.usecase.TokenUsecase;
 
-import java.time.LocalDateTime;
-
-public class TokenUsecaseMock implements TokenUsecase {
+public class TokenUsecaseExceptionMock implements TokenUsecase {
     @Override
     public Token createToken(ShopperId shopperId) {
-        return new Token(shopperId, new TokenId("abc"), TokenStatus.UNUSED);
+        return null;
     }
 
     @Override
     public Payment pay(TokenPayInput input) throws PaymentException {
-
-        return new Payment(input.storeId, input.shopperId, input.amount, LocalDateTime.now(), input.tokenId);
+        throw new PaymentException("Fail to pay");
     }
 }

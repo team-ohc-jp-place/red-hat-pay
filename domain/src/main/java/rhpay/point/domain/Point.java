@@ -1,7 +1,6 @@
 package rhpay.point.domain;
 
 import rhpay.payment.domain.Money;
-import rhpay.payment.domain.Payment;
 import rhpay.payment.domain.ShopperId;
 
 public class Point {
