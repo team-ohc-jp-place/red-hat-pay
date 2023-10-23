@@ -1,10 +1,5 @@
 package rhpay.payment.rest;
 
-import rhpay.payment.domain.Money;
-import rhpay.payment.domain.ShopperId;
-import rhpay.payment.domain.StoreId;
-import rhpay.payment.domain.TokenId;
-
 import java.time.LocalDateTime;
 
 public class PaymentResponse {

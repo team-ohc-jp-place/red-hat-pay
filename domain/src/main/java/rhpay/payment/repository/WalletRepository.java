@@ -1,7 +1,6 @@
 package rhpay.payment.repository;
 
 import rhpay.payment.domain.Shopper;
-import rhpay.payment.domain.ShopperId;
 import rhpay.payment.domain.Wallet;
 
 public interface WalletRepository {

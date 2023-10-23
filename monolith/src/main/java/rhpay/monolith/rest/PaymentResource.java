@@ -38,7 +38,7 @@ public class PaymentResource {
     @Transactional
     public TokenResponse createTokenAPI(@PathVariable("userId") final int userId) {
         TokenUsecaseImpl usecase = new TokenUsecaseImpl(tokenRepository, coffeeStoreRepository, shopperRepository, paymentRepository, walletRepository);
-        Token token = usecase.createToken(new ShopperId(userId), tokenRepository);
+        Token token = usecase.createToken(new ShopperId(userId));
         return new TokenResponse(token.getShopperId().value, token.getTokenId().value, token.getStatus());
     }
 

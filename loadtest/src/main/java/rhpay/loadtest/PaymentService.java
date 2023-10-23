@@ -1,8 +1,6 @@
 package rhpay.loadtest;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import rhpay.payment.domain.Payment;
-import rhpay.payment.domain.Token;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;

@@ -1,6 +1,5 @@
 package rhpay.point.repository;
 
-import rhpay.payment.domain.Payment;
 import rhpay.payment.domain.ShopperId;
 import rhpay.point.domain.Point;
 

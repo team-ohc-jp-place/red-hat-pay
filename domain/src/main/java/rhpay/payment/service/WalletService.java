@@ -2,7 +2,6 @@ package rhpay.payment.service;
 
 import rhpay.payment.domain.Shopper;
 import rhpay.payment.repository.WalletRepository;
-import rhpay.payment.domain.ShopperId;
 import rhpay.payment.domain.Wallet;
 
 public class WalletService {

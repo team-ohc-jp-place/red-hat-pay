@@ -4,36 +4,25 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import rhpay.payment.domain.*;
-import rhpay.payment.repository.*;
-import rhpay.payment.service.ShopperService;
-import rhpay.payment.service.TokenService;
-import rhpay.payment.service.WalletService;
 import rhpay.payment.usecase.TokenPayInput;
 import rhpay.payment.usecase.TokenUsecase;
-import rhpay.payment.usecase.TokenUsecaseImpl;
-import rhpay.point.domain.Point;
-import rhpay.point.repository.PointRepository;
-import rhpay.point.usecase.AddPointInput;
-import rhpay.point.usecase.PointUsecase;
 
 @Path("/")
-public class HelloResource {
+public class PaymentResource {
 
     @Inject
     private TokenUsecase usecase;
 
-//    @POST
-//    @Path("/pay/{userId}")
-//    @Produces(MediaType.APPLICATION_JSON)
-//    public TokenResponse createTokenAPI(@PathParam("userId") final int userId) {
-//
-//        TokenService tokenService = new TokenService(tokenRepository);
-//
-//        Token token = tokenService.create(new ShopperId(userId));
-//
-//        TokenResponse res = new TokenResponse(token.getShopperId().value, token.getTokenId().value, token.getStatus());
-//        return res;
-//    }
+    @POST
+    @Path("/pay/{userId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public TokenResponse createTokenAPI(@PathParam("userId") final int userId) {
+
+        Token token = usecase.createToken(new ShopperId(userId));
+
+        TokenResponse res = new TokenResponse(token.getShopperId().value, token.getTokenId().value, token.getStatus());
+        return res;
+    }
 
     @POST
     @Path("/pay/{userId}/{tokenId}/{storeId}/{amount}")
@@ -49,6 +38,7 @@ public class HelloResource {
         TokenPayInput input = new TokenPayInput(shopperId, amount, tokenId, storeId);
         Payment payment = usecase.pay(input);
 
+        //ポイント加算処理
 //        AddPointInput addPointInput = new AddPointInput(payment, pointRepository);
 //        PointUsecase pointUsecase = new PointUsecase();
 //        Point point = pointUsecase.addPoint(addPointInput);
