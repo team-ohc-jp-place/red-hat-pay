@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: wildfly-pod
+spec:
+  containers:
+    - name: wildfly-container
+      image: quay.io/wildfly/wildfly:29.0.0.Final-jdk11
+#      command: ["/opt/jboss/wildfly/bin/standalone.sh"]
+#      args: ["-b=0.0.0.0","-bmanagement=0.0.0.0"]
+      ports:
+        - containerPort: 8080
+        - containerPort: 9990
