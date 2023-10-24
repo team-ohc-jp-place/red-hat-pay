@@ -1,6 +1,8 @@
 package rhpay.payment.repository;
 
 import io.quarkus.infinispan.client.Remote;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 import jdk.jfr.Event;
 import org.infinispan.client.hotrod.RemoteCache;
 import rhpay.monitoring.TokenRepositoryEvent;
@@ -11,9 +13,6 @@ import rhpay.payment.cache.TokenStatus;
 import rhpay.payment.domain.ShopperId;
 import rhpay.payment.domain.Token;
 import rhpay.payment.domain.TokenId;
-
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
 
 @RequestScoped
 public class CacheTokenRepository implements TokenRepository {

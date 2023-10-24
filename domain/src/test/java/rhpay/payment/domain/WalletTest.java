@@ -41,7 +41,7 @@ public class WalletTest {
             Money newChargedMoney = w1.autoCharge();
             assertEquals(11, newChargedMoney.value);
             assertEquals(11, w1.getChargedMoney().value);
-        }catch (FailedAutoChargeException e){
+        } catch (FailedAutoChargeException e) {
             fail();
         }
     }
@@ -59,7 +59,7 @@ public class WalletTest {
             assertEquals(payment.getBillingAmount().value, 10);
             assertEquals(w.getChargedMoney().value, 0);
 
-        }catch(FailedPaymentException e){
+        } catch (FailedPaymentException e) {
             fail();
         }
     }
@@ -68,7 +68,7 @@ public class WalletTest {
      * For Workshop
      * テストコードのコメントを削除し、他のテストを参考に不足部分を追加してテストを完成させてください
      * 0 円を表すには ZERO_MONEY を使用してください。
-     * ショップは SHOP_1 を使用してください
+     * ショップは STORE_1 を使用してください
      * 買い物客は SHOPPER_1 を使用してください
      */
     @Test
@@ -103,7 +103,7 @@ public class WalletTest {
     /**
      * For Workshop
      * テストコードのコメントを削除し、他のテストを参考に TODO 部分を追加してテストを完成させてください
-     * ショップは SHOP_1 を使用してください
+     * ショップは STORE_1 を使用してください
      * 買い物客は SHOPPER_1 を使用してください
      */
     @Test
@@ -114,15 +114,15 @@ public class WalletTest {
         // TODO: オートチャージの金額を autoChargeMoney として作成（5円）
         // TODO: 請求される金額を billAmount として作成（11円）
 
-        assertTrue(chargedMoney.value > billAmount.value);
+        assertTrue(chargedMoney.value < billAmount.value);
         assertNotEquals(0, autoChargeMoney.value);
 
         // TODO: 財布を wallet として作成。コンストラクタに必要な引数は、買い物客、チャージされている金額、オートチャージの金額　です
         // TODO: 請求を billing として作成。コンストラクタに必要な引数は、ショップID、請求金額 です。
 
         try {
-            // TODO: 財布と請求を使用して支払いをして、その戻り値のとなる支払い (Paymentクラス）を payment として作成
-            // TODO: 財布の残高が 4 円であることを確認
+            // TODO: 請求を引数として使用し、財布が支払い(payメソッド)をして、その戻り値のとなる支払い (Paymentクラス）を payment として作成
+            // TODO: 財布の残高が 4 円であることを確認。残高は　wallet.getChargedMoney().value で取得できます
         } catch (FailedPaymentException e) {
             // ここに来るとテストが失敗です。
             fail();

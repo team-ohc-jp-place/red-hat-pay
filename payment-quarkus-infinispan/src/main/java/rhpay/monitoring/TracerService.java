@@ -1,6 +1,7 @@
 package rhpay.monitoring;
 
-import javax.enterprise.context.RequestScoped;
+import jakarta.enterprise.context.RequestScoped;
+
 import java.util.UUID;
 
 @RequestScoped
@@ -13,7 +14,7 @@ public class TracerService {
 
     public String traceRest() {
 
-        if(!isDebug){
+        if (!isDebug) {
             return "";
         }
 
@@ -40,7 +41,7 @@ public class TracerService {
 
     public String traceRepository() {
 
-        if(!isDebug){
+        if (!isDebug) {
             return "";
         }
 
@@ -68,7 +69,7 @@ public class TracerService {
 
     public void closeTrace() {
 
-        if(!isDebug){
+        if (!isDebug) {
             return;
         }
 

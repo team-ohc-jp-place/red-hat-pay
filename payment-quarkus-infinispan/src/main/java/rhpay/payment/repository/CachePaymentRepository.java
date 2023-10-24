@@ -1,13 +1,13 @@
 package rhpay.payment.repository;
 
 import io.quarkus.infinispan.client.Remote;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 import org.infinispan.client.hotrod.RemoteCache;
 import rhpay.payment.cache.PaymentEntity;
 import rhpay.payment.cache.TokenKey;
 import rhpay.payment.domain.*;
 
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 

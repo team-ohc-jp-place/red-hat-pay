@@ -1,5 +1,7 @@
 package rhpay.payment.repository;
 
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 import jdk.jfr.Event;
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
@@ -7,9 +9,6 @@ import rhpay.monitoring.TokenRepositoryEvent;
 import rhpay.monitoring.TracerService;
 import rhpay.payment.domain.Payment;
 import rhpay.payment.event.PaymentEvent;
-
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
 
 @RequestScoped
 public class KafkaNotifyRepository implements NotifyRepository {
@@ -29,7 +28,7 @@ public class KafkaNotifyRepository implements NotifyRepository {
         try {
             this.paymentEmitter.send(new PaymentEvent(payment.getBillingDateTime(), payment.getShopperId().value, payment.getStoreId().value, payment.getTokenId().value, payment.getBillingAmount().value));
 
-        }finally{
+        } finally {
             event.commit();
             tracerService.closeTrace();
         }
