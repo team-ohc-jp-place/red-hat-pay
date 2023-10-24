@@ -1,15 +1,14 @@
 package rhpay.payment.repository;
 
 import io.quarkus.infinispan.client.Remote;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 import org.infinispan.client.hotrod.RemoteCache;
 import rhpay.payment.cache.ShopperKey;
 import rhpay.payment.cache.WalletEntity;
 import rhpay.payment.domain.Money;
 import rhpay.payment.domain.Shopper;
 import rhpay.payment.domain.Wallet;
-
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
 
 @RequestScoped
 public class CacheWalletRepository implements WalletRepository {
@@ -25,7 +24,7 @@ public class CacheWalletRepository implements WalletRepository {
         return wallet;
     }
 
-    public void store(Wallet wallet){
+    public void store(Wallet wallet) {
         throw new UnsupportedOperationException("");
     }
 

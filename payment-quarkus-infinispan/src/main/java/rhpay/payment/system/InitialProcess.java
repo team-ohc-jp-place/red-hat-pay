@@ -1,12 +1,12 @@
 package rhpay.payment.system;
 
 import io.quarkus.runtime.StartupEvent;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.commons.configuration.XMLStringConfiguration;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
 import java.util.Set;
 
 @ApplicationScoped

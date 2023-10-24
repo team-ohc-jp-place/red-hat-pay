@@ -3,15 +3,15 @@ package rhpay.payment.system;
 import io.quarkus.infinispan.client.Remote;
 import io.quarkus.qute.Template;
 import io.smallrye.mutiny.Uni;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 import org.infinispan.client.hotrod.RemoteCache;
 import rhpay.payment.cache.*;
 
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -56,13 +56,13 @@ public class InitializeResource {
         Map<ShopperKey, WalletEntity> walletMap = new HashMap<>(BATCH_ENTRY_NUM);
         int batchCount = 0;
 
-        for(int i = 0 ; i < userNum ; i++){
+        for (int i = 0; i < userNum; i++) {
             batchCount++;
             ShopperKey shopperKey = new ShopperKey(i);
-            userMap.put(shopperKey, new ShopperEntity("user"+i));
+            userMap.put(shopperKey, new ShopperEntity("user" + i));
             walletMap.put(shopperKey, new WalletEntity(amount, autoCharge));
 
-            if(batchCount == BATCH_ENTRY_NUM){
+            if (batchCount == BATCH_ENTRY_NUM) {
                 userCache.putAllAsync(userMap);
                 walletCache.putAllAsync(walletMap);
 
@@ -72,7 +72,7 @@ public class InitializeResource {
             }
         }
 
-        if(batchCount != 0){
+        if (batchCount != 0) {
             userCache.putAllAsync(userMap);
             walletCache.putAllAsync(walletMap);
         }

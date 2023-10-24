@@ -2,15 +2,14 @@ package rhpay.payment.rest;
 
 import io.quarkus.qute.Template;
 import io.smallrye.mutiny.Uni;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
 import rhpay.monitoring.TokenRestEvent;
 import rhpay.monitoring.TracerService;
 import rhpay.payment.domain.*;
 import rhpay.payment.repository.*;
 import rhpay.payment.service.*;
-
-import javax.inject.Inject;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
 
 @Path("/")
 //@Traced
