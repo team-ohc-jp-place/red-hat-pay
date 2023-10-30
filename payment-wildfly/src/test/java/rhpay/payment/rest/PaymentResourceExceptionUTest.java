@@ -73,7 +73,7 @@ public class PaymentResourceExceptionUTest {
         response
                 .then()
                 .assertThat()
-                .statusCode(HttpURLConnection.?);
+                .statusCode(?);
 この行を削除します */
     }
 

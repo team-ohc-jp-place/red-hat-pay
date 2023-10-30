@@ -126,7 +126,7 @@ public class PaymentResourceUTest {
                 .then()
                 .assertThat()
                  // HTTPのステータスコードを指定します
-                .statusCode(?)
+                .statusCode(HttpURLConnection.?)
                 // 期待するストアのIDを指定します
                 .body("storeId", is(?))
                 // 期待する買い物客のIDを指定します
